@@ -14,6 +14,7 @@ fn main() {
         match cmd {
             "list" => cmd::list(&store),
             "show" => cmd::show(&store, &args[2]),
+            "init" => cmd::init(&store),
             _ => cmd::show(&store, &args[1]),
         };
     }
