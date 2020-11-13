@@ -3,7 +3,7 @@ use std::env;
 mod cmd;
 
 fn main() {
-    let store = dirs::home_dir().unwrap().join(".password-store");
+    let store = dirs::home_dir().unwrap().join(".passage");
 
     let args: Vec<String> = env::args().collect();
 
