@@ -1,9 +1,10 @@
-use std::env;
-
 mod cmd;
 
+use passage::PasswordStore;
+use std::env;
+
 fn main() {
-    let store = dirs::home_dir().unwrap().join(".passage");
+    let store = PasswordStore::new(dirs::home_dir().unwrap().join(".passage"));
 
     let args: Vec<String> = env::args().collect();
 

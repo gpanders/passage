@@ -1,8 +1,8 @@
 use age::keys::SecretKey;
+use passage::PasswordStore;
 use secrecy::ExposeSecret;
 use std::fs;
 use std::io::prelude::*;
-use std::path::Path;
 
 fn save_secret_key(key: &SecretKey) {
     let key_dir = dirs::data_dir().unwrap().join("passage").join("keys");
@@ -17,9 +17,9 @@ fn save_secret_key(key: &SecretKey) {
     .unwrap();
 }
 
-pub fn init(store: &Path) {
-    if !store.exists() {
-        fs::create_dir_all(&store).unwrap();
+pub fn init(store: &PasswordStore) {
+    if !store.dir.exists() {
+        fs::create_dir_all(&store.dir).unwrap();
     }
 
     let key = age::SecretKey::generate();
@@ -28,7 +28,7 @@ pub fn init(store: &Path) {
     let mut public_keys = fs::OpenOptions::new()
         .create(true)
         .append(true)
-        .open(store.join(".public-keys"))
+        .open(store.dir.join(".public-keys"))
         .unwrap();
 
     let pubkey = key.to_public();

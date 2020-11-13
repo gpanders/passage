@@ -1,4 +1,5 @@
 use colored::*;
+use passage::PasswordStore;
 use std::fs::{self, DirEntry};
 use std::io::Result;
 use std::path::Path;
@@ -46,12 +47,12 @@ fn tree(root: &Path, depth: usize, prefix: String) -> Result<()> {
     Ok(())
 }
 
-pub fn list(store: &Path) {
-    if !store.exists() {
+pub fn list(store: &PasswordStore) {
+    if !store.dir.exists() {
         println!("Error: password store is empty. Try \"passage init\".");
         return;
     }
 
     println!("Password Store");
-    tree(&store, 1, String::from("")).unwrap();
+    tree(&store.dir, 1, String::from("")).unwrap();
 }
