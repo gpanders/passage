@@ -35,7 +35,7 @@ fn tree(root: &Path, depth: usize, prefix: String) -> Result<()> {
             let next_prefix = prefix.clone() + if is_last { "    " } else { "│   " };
             tree(&path, depth + 1, next_prefix)?;
         } else {
-            let file_name = match file_name.strip_suffix(".gpg") {
+            let file_name = match file_name.strip_suffix(".age") {
                 Some(e) => e,
                 _ => &file_name,
             };
