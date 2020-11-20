@@ -23,7 +23,7 @@ mod tests {
         let pubkey = key.to_public();
 
         let encrypted = encrypt(&plaintext, &[pubkey]).unwrap();
-        let decrypted = decrypt(encrypted, key.into()).unwrap();
+        let decrypted = decrypt(encrypted, &[key.into()]).unwrap();
 
         assert_eq!(decrypted, plaintext);
     }
@@ -105,7 +105,7 @@ pub fn encrypt(plaintext: &str, recipients: &[RecipientKey]) -> Result<Vec<u8>, 
     Ok(encrypted)
 }
 
-pub fn decrypt(cypher: Vec<u8>, key: Identity) -> Result<String, Error> {
+pub fn decrypt(cypher: Vec<u8>, key: &[Identity; 1]) -> Result<String, Error> {
     let decryptor = {
         match age::Decryptor::new(&cypher[..]) {
             Ok(d) => match d {
@@ -117,7 +117,7 @@ pub fn decrypt(cypher: Vec<u8>, key: Identity) -> Result<String, Error> {
     };
 
     let mut decrypted = vec![];
-    let mut reader = decryptor.decrypt(&[key])?;
+    let mut reader = decryptor.decrypt(key)?;
 
     reader.read_to_end(&mut decrypted)?;
 

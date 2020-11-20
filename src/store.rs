@@ -1,4 +1,4 @@
-use age::keys::RecipientKey;
+use age::keys::{Identity, RecipientKey};
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -7,6 +7,7 @@ use std::str::FromStr;
 
 pub struct PasswordStore {
     pub dir: PathBuf,
+    pub key: Option<Identity>,
     pub recipients: Vec<RecipientKey>,
 }
 
@@ -23,6 +24,16 @@ impl PasswordStore {
                 .for_each(|e| recipients.push(e));
         }
 
-        PasswordStore { dir, recipients }
+        let key_file = String::from(crate::data_dir().join("key.txt").to_string_lossy());
+        let key = match Identity::from_file(key_file) {
+            Ok(mut identities) => identities.pop(),
+            _ => None,
+        };
+
+        PasswordStore {
+            dir,
+            key,
+            recipients,
+        }
     }
 }

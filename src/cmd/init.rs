@@ -28,7 +28,7 @@ fn save_secret_key(key: &SecretKey) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn init(store: &PasswordStore) -> Result<(), Error> {
+pub fn init(store: PasswordStore) -> Result<(), Error> {
     if !store.dir.exists() {
         fs::create_dir_all(&store.dir).unwrap();
     }

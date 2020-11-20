@@ -5,7 +5,7 @@ use std::fs;
 use std::io;
 use std::io::prelude::*;
 
-pub fn insert(store: &PasswordStore, item: Option<&str>) -> Result<(), Error> {
+pub fn insert(store: PasswordStore, item: Option<&str>) -> Result<(), Error> {
     if item.is_none() {
         eprintln!("Usage: passage insert ITEM");
         return Ok(());

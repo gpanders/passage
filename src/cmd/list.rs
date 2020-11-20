@@ -47,7 +47,7 @@ fn tree(root: &Path, depth: usize, prefix: String) -> io::Result<()> {
     Ok(())
 }
 
-pub fn list(store: &PasswordStore) -> Result<(), Error> {
+pub fn list(store: PasswordStore) -> Result<(), Error> {
     if !store.dir.exists() {
         return Err(Error::StoreNotInitialized);
     }

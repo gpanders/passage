@@ -10,21 +10,21 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     let result = if args.len() < 2 {
-        cmd::list(&store)
+        cmd::list(store)
     } else {
         let cmd = &args[1][..];
         match cmd {
-            "list" => cmd::list(&store),
+            "list" => cmd::list(store),
             "show" => {
                 if args.len() > 2 {
-                    cmd::show(&store, &args[2])
+                    cmd::show(store, &args[2])
                 } else {
-                    cmd::list(&store)
+                    cmd::list(store)
                 }
             }
-            "init" => cmd::init(&store),
-            "insert" => cmd::insert(&store, if args.len() > 2 { Some(&args[2]) } else { None }),
-            _ => cmd::show(&store, &args[1]),
+            "init" => cmd::init(store),
+            "insert" => cmd::insert(store, if args.len() > 2 { Some(&args[2]) } else { None }),
+            _ => cmd::show(store, &args[1]),
         }
     };
 
