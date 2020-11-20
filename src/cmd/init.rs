@@ -2,19 +2,30 @@ use age::keys::SecretKey;
 use passage::{Error, PasswordStore};
 use secrecy::ExposeSecret;
 use std::fs;
+use std::io;
 use std::io::prelude::*;
 
-fn save_secret_key(key: &SecretKey) {
-    let key_dir = dirs::data_dir().unwrap().join("passage").join("keys");
-    if !key_dir.exists() {
-        fs::create_dir_all(&key_dir).unwrap();
+fn save_secret_key(key: &SecretKey) -> Result<(), Error> {
+    let data_dir = passage::data_dir();
+    if !data_dir.exists() {
+        fs::create_dir_all(&data_dir)?;
     }
 
-    fs::write(
-        key_dir.join(format!("{}.txt", key.to_public())),
-        key.to_string().expose_secret(),
-    )
-    .unwrap();
+    let mut key_file = match fs::OpenOptions::new()
+        .create_new(true)
+        .write(true)
+        .open(data_dir.join("key.txt"))
+    {
+        Ok(f) => f,
+        Err(e) => match e.kind() {
+            io::ErrorKind::AlreadyExists => return Err(Error::SecretKeyExists),
+            _ => return Err(e.into()),
+        },
+    };
+
+    key_file.write_all(key.to_string().expose_secret().as_bytes())?;
+
+    Ok(())
 }
 
 pub fn init(store: &PasswordStore) -> Result<(), Error> {
@@ -23,7 +34,7 @@ pub fn init(store: &PasswordStore) -> Result<(), Error> {
     }
 
     let key = age::SecretKey::generate();
-    save_secret_key(&key);
+    save_secret_key(&key)?;
 
     let mut public_keys = fs::OpenOptions::new()
         .create(true)

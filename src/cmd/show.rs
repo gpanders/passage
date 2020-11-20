@@ -11,7 +11,7 @@ pub fn show(store: &PasswordStore, item: &str) -> Result<(), Error> {
         return Err(Error::ItemNotFound(String::from(item)));
     }
 
-    let key_file = String::from(passage::data_dir().join("keys.txt").to_string_lossy());
+    let key_file = String::from(passage::data_dir().join("key.txt").to_string_lossy());
     let key = match Identity::from_file(key_file) {
         Ok(mut identities) => match identities.pop() {
             Some(key) => key,

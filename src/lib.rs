@@ -22,7 +22,7 @@ mod tests {
         let key = age::SecretKey::generate();
         let pubkey = key.to_public();
 
-        let encrypted = encrypt(&plaintext, vec![pubkey]).unwrap();
+        let encrypted = encrypt(&plaintext, &[pubkey]).unwrap();
         let decrypted = decrypt(encrypted, key.into()).unwrap();
 
         assert_eq!(decrypted, plaintext);
@@ -36,6 +36,7 @@ pub enum Error {
     ItemNotFound(String),
     StoreNotInitialized,
     NoSecretKey,
+    SecretKeyExists,
     Other(String),
 }
 
@@ -49,6 +50,7 @@ impl fmt::Display for Error {
                 write!(f, "Error: password store is empty. Try \"passage init\".")
             }
             Error::NoSecretKey => write!(f, "Error: no secret key found. Try \"passage init\"."),
+            Error::SecretKeyExists => write!(f, "Error: secret key already exists."),
             Error::Other(msg) => write!(f, "Error: {}", msg),
         }
     }
@@ -86,8 +88,8 @@ pub fn data_dir() -> PathBuf {
     dirs::data_dir().unwrap().join("passage")
 }
 
-pub fn encrypt(plaintext: &str, recipients: Vec<RecipientKey>) -> Result<Vec<u8>, Error> {
-    let encryptor = age::Encryptor::with_recipients(recipients);
+pub fn encrypt(plaintext: &str, recipients: &[RecipientKey]) -> Result<Vec<u8>, Error> {
+    let encryptor = age::Encryptor::with_recipients(recipients.to_vec());
 
     let mut encrypted = vec![];
     let mut writer = encryptor.wrap_output(&mut encrypted, age::Format::Binary)?;
