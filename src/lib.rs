@@ -33,15 +33,23 @@ mod tests {
 pub enum Error {
     AgeError(age::Error),
     IoError(io::Error),
+    ItemNotFound(String),
+    StoreNotInitialized,
+    NoSecretKey,
     Other(String),
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::AgeError(inner) => inner.fmt(f),
-            Error::IoError(inner) => inner.fmt(f),
-            Error::Other(inner) => inner.fmt(f),
+            Error::AgeError(inner) => write!(f, "Error: {}", inner),
+            Error::IoError(inner) => write!(f, "Error: {}", inner),
+            Error::ItemNotFound(item) => write!(f, "Error: {} is not in the password store.", item),
+            Error::StoreNotInitialized => {
+                write!(f, "Error: password store is empty. Try \"passage init\".")
+            }
+            Error::NoSecretKey => write!(f, "Error: no secret key found. Try \"passage init\"."),
+            Error::Other(msg) => write!(f, "Error: {}", msg),
         }
     }
 }
@@ -65,6 +73,12 @@ impl From<io::Error> for Error {
 impl From<age::Error> for Error {
     fn from(e: age::Error) -> Self {
         Error::AgeError(e)
+    }
+}
+
+impl From<String> for Error {
+    fn from(e: String) -> Self {
+        Error::Other(e)
     }
 }
 

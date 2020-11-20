@@ -8,27 +8,16 @@ pub fn show(store: &PasswordStore, item: &str) -> Result<(), Error> {
     file.set_file_name(String::from(item) + ".age");
 
     if !file.exists() {
-        return Err(Error::Other(format!(
-            "Error: {} is not in the password store.",
-            item
-        )));
+        return Err(Error::ItemNotFound(String::from(item)));
     }
 
     let key_file = String::from(passage::data_dir().join("keys.txt").to_string_lossy());
     let key = match Identity::from_file(key_file) {
         Ok(mut identities) => match identities.pop() {
             Some(key) => key,
-            _ => {
-                return Err(Error::Other(String::from(
-                    "Error: No secret key available. You may need to run \"passage init\".",
-                )));
-            }
+            _ => return Err(Error::NoSecretKey),
         },
-        _ => {
-            return Err(Error::Other(String::from(
-                "Error: No secret key available. You may need to run \"passage init\".",
-            )));
-        }
+        _ => return Err(Error::NoSecretKey),
     };
 
     let buf = fs::read(file).unwrap();

@@ -49,9 +49,7 @@ fn tree(root: &Path, depth: usize, prefix: String) -> io::Result<()> {
 
 pub fn list(store: &PasswordStore) -> Result<(), Error> {
     if !store.dir.exists() {
-        return Err(Error::Other(String::from(
-            "Error: password store is empty. Try \"passage init\".",
-        )));
+        return Err(Error::StoreNotInitialized);
     }
 
     println!("Password Store");
