@@ -23,6 +23,7 @@ fn main() {
                 }
             }
             "init" => cmd::init(&store),
+            "insert" => cmd::insert(&store, if args.len() > 2 { Some(&args[2]) } else { None }),
             _ => cmd::show(&store, &args[1]),
         }
     };

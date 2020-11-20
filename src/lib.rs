@@ -34,9 +34,11 @@ pub enum Error {
     AgeError(age::Error),
     IoError(io::Error),
     ItemNotFound(String),
+    ItemAlreadyExists(String),
     StoreNotInitialized,
     NoSecretKey,
     SecretKeyExists,
+    PasswordsDoNotMatch,
     Other(String),
 }
 
@@ -46,11 +48,15 @@ impl fmt::Display for Error {
             Error::AgeError(inner) => write!(f, "Error: {}", inner),
             Error::IoError(inner) => write!(f, "Error: {}", inner),
             Error::ItemNotFound(item) => write!(f, "Error: {} is not in the password store.", item),
+            Error::ItemAlreadyExists(item) => {
+                write!(f, "Error: {} already exists in the password store.", item)
+            }
             Error::StoreNotInitialized => {
                 write!(f, "Error: password store is empty. Try \"passage init\".")
             }
             Error::NoSecretKey => write!(f, "Error: no secret key found. Try \"passage init\"."),
             Error::SecretKeyExists => write!(f, "Error: secret key already exists."),
+            Error::PasswordsDoNotMatch => write!(f, "Error: passwords do not match."),
             Error::Other(msg) => write!(f, "Error: {}", msg),
         }
     }
