@@ -15,7 +15,13 @@ fn main() {
         let cmd = &args[1][..];
         match cmd {
             "list" => cmd::list(&store),
-            "show" => cmd::show(&store, &args[2]),
+            "show" => {
+                if args.len() > 2 {
+                    cmd::show(&store, &args[2])
+                } else {
+                    cmd::list(&store)
+                }
+            }
             "init" => cmd::init(&store),
             _ => cmd::show(&store, &args[1]),
         }
