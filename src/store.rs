@@ -1,5 +1,7 @@
 use age::keys::RecipientKey;
-use std::fs;
+use std::fs::File;
+use std::io::prelude::*;
+use std::io::BufReader;
 use std::path::PathBuf;
 use std::str::FromStr;
 
@@ -10,16 +12,16 @@ pub struct PasswordStore {
 
 impl PasswordStore {
     pub fn new(dir: PathBuf) -> PasswordStore {
-        let mut recipients: Vec<RecipientKey> = Vec::new();
+        let mut recipients: Vec<RecipientKey> = vec![];
 
-        if let Ok(data) = fs::read(dir.join(".public-keys")) {
-            let contents = String::from_utf8_lossy(&data);
-            let public_keys = contents.split('\n');
-            public_keys
-                .map(|e| RecipientKey::from_str(e))
+        if let Ok(file) = File::open(dir.join(".public-keys")) {
+            let buf = BufReader::new(file);
+            buf.lines()
+                .filter_map(|e| e.ok())
+                .map(|e| RecipientKey::from_str(&e))
                 .filter_map(|e| e.ok())
                 .for_each(|e| recipients.push(e));
-        };
+        }
 
         PasswordStore { dir, recipients }
     }

@@ -2,14 +2,15 @@ mod cmd;
 
 use passage::PasswordStore;
 use std::env;
+use std::process;
 
 fn main() {
     let store = PasswordStore::new(dirs::home_dir().unwrap().join(".passage"));
 
     let args: Vec<String> = env::args().collect();
 
-    if args.len() < 2 {
-        cmd::list(&store);
+    let result = if args.len() < 2 {
+        cmd::list(&store)
     } else {
         let cmd = &args[1][..];
         match cmd {
@@ -17,6 +18,11 @@ fn main() {
             "show" => cmd::show(&store, &args[2]),
             "init" => cmd::init(&store),
             _ => cmd::show(&store, &args[1]),
-        };
+        }
+    };
+
+    if let Err(e) = result {
+        eprintln!("{}", e);
+        process::exit(1);
     }
 }

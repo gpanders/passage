@@ -1,5 +1,5 @@
 use age::keys::SecretKey;
-use passage::PasswordStore;
+use passage::{Error, PasswordStore};
 use secrecy::ExposeSecret;
 use std::fs;
 use std::io::prelude::*;
@@ -17,7 +17,7 @@ fn save_secret_key(key: &SecretKey) {
     .unwrap();
 }
 
-pub fn init(store: &PasswordStore) {
+pub fn init(store: &PasswordStore) -> Result<(), Error> {
     if !store.dir.exists() {
         fs::create_dir_all(&store.dir).unwrap();
     }
@@ -28,12 +28,13 @@ pub fn init(store: &PasswordStore) {
     let mut public_keys = fs::OpenOptions::new()
         .create(true)
         .append(true)
-        .open(store.dir.join(".public-keys"))
-        .unwrap();
+        .open(store.dir.join(".public-keys"))?;
 
     let pubkey = key.to_public();
-    writeln!(&mut public_keys, "{}", pubkey).unwrap();
+    writeln!(&mut public_keys, "{}", pubkey)?;
 
     println!("Initialized store with new key:\n");
     println!("    {}\n", pubkey);
+
+    Ok(())
 }

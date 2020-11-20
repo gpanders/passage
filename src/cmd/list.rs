@@ -1,7 +1,7 @@
 use colored::*;
-use passage::PasswordStore;
+use passage::{Error, PasswordStore};
 use std::fs::{self, DirEntry};
-use std::io::Result;
+use std::io;
 use std::path::Path;
 
 fn is_hidden(entry: &DirEntry) -> bool {
@@ -11,7 +11,7 @@ fn is_hidden(entry: &DirEntry) -> bool {
         .map_or(false, |s| s.starts_with('.'))
 }
 
-fn tree(root: &Path, depth: usize, prefix: String) -> Result<()> {
+fn tree(root: &Path, depth: usize, prefix: String) -> io::Result<()> {
     let mut entries = fs::read_dir(root)?
         .filter_map(|e| e.ok())
         .filter(|e| !is_hidden(e))
@@ -47,12 +47,15 @@ fn tree(root: &Path, depth: usize, prefix: String) -> Result<()> {
     Ok(())
 }
 
-pub fn list(store: &PasswordStore) {
+pub fn list(store: &PasswordStore) -> Result<(), Error> {
     if !store.dir.exists() {
-        println!("Error: password store is empty. Try \"passage init\".");
-        return;
+        return Err(Error::Other(String::from(
+            "Error: password store is empty. Try \"passage init\".",
+        )));
     }
 
     println!("Password Store");
-    tree(&store.dir, 1, String::from("")).unwrap();
+    tree(&store.dir, 1, String::from(""))?;
+
+    Ok(())
 }
