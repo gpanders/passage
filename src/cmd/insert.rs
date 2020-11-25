@@ -1,6 +1,6 @@
-extern crate rpassword;
-
+use age::cli_common::read_secret;
 use passage::{Error, PasswordStore};
+use secrecy::ExposeSecret;
 use std::fs;
 use std::io;
 use std::io::prelude::*;
@@ -29,16 +29,30 @@ pub fn insert(store: PasswordStore, item: Option<&str>) -> Result<(), Error> {
         },
     };
 
-    let prompt = format!("Enter password for {}: ", item);
-    let input = rpassword::read_password_from_tty(Some(&prompt))?;
+    let input = match read_secret(
+        &format!("Enter password for {}", item),
+        "Password",
+        Some(&format!("Retype password for {}", item)),
+    ) {
+        Ok(secret) => secret.expose_secret().clone(),
+        Err(pinentry::Error::Cancelled) => return Ok(()),
+        Err(pinentry::Error::Timeout) => return Err(Error::PassphraseTimedOut),
+        Err(pinentry::Error::Encoding(e)) => {
+            return Err(Error::IoError(io::Error::new(
+                io::ErrorKind::InvalidData,
+                e,
+            )));
+        }
+        Err(pinentry::Error::Gpg(e)) => {
+            return Err(Error::IoError(io::Error::new(
+                io::ErrorKind::Other,
+                format!("{}", e),
+            )));
+        }
+        Err(pinentry::Error::Io(e)) => return Err(Error::IoError(e)),
+    };
 
-    let prompt = format!("Retype password for {}: ", item);
-    if rpassword::read_password_from_tty(Some(&prompt))? != input {
-        fs::remove_file(&path)?;
-        return Err(Error::PasswordsDoNotMatch);
-    }
-
-    let encrypted = passage::encrypt(&input, &store.recipients)?;
+    let encrypted = passage::encrypt(&input, store.recipients)?;
     file.write_all(&encrypted[..])?;
 
     println!("Created new entry in the password store for {}.", item);

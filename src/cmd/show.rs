@@ -16,7 +16,7 @@ pub fn show(store: PasswordStore, item: &str) -> Result<(), Error> {
 
     let key = store.key.unwrap();
     let buf = fs::read(file).unwrap();
-    let decrypted = passage::decrypt(buf, &[key])?;
+    let decrypted = passage::decrypt(buf, key)?;
     println!("{}", decrypted);
 
     Ok(())

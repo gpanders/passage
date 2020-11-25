@@ -11,6 +11,6 @@ edition = "2018"
 [dependencies]
 dirs = "3"
 colored = "2"
-age = "0.4"
-secrecy = "0.6"
-rpassword = "5.0"
+age = { version = "0.5", features = ["cli-common"] }
+secrecy = "0.7"
+pinentry = "0.2"

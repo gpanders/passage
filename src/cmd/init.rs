@@ -1,11 +1,11 @@
-use age::keys::SecretKey;
+use age::x25519::Identity;
 use passage::{Error, PasswordStore};
 use secrecy::ExposeSecret;
 use std::fs;
 use std::io;
 use std::io::prelude::*;
 
-fn save_secret_key(key: &SecretKey) -> Result<(), Error> {
+fn save_secret_key(key: &Identity) -> Result<(), Error> {
     let data_dir = passage::data_dir();
     if !data_dir.exists() {
         fs::create_dir_all(&data_dir)?;
@@ -33,7 +33,7 @@ pub fn init(store: PasswordStore) -> Result<(), Error> {
         fs::create_dir_all(&store.dir).unwrap();
     }
 
-    let key = age::SecretKey::generate();
+    let key = age::x25519::Identity::generate();
     save_secret_key(&key)?;
 
     let mut public_keys = fs::OpenOptions::new()

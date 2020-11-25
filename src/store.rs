@@ -1,4 +1,4 @@
-use age::keys::{Identity, RecipientKey};
+use age::{self, Identity, IdentityFile, Recipient};
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -7,26 +7,29 @@ use std::str::FromStr;
 
 pub struct PasswordStore {
     pub dir: PathBuf,
-    pub key: Option<Identity>,
-    pub recipients: Vec<RecipientKey>,
+    pub key: Option<Box<dyn Identity>>,
+    pub recipients: Vec<Box<dyn Recipient>>,
 }
 
 impl PasswordStore {
     pub fn new(dir: PathBuf) -> PasswordStore {
-        let mut recipients: Vec<RecipientKey> = vec![];
+        let mut recipients: Vec<Box<dyn Recipient>> = vec![];
 
         if let Ok(file) = File::open(dir.join(".public-keys")) {
             let buf = BufReader::new(file);
             buf.lines()
                 .filter_map(|e| e.ok())
-                .map(|e| RecipientKey::from_str(&e))
+                .map(|e| age::x25519::Recipient::from_str(&e))
                 .filter_map(|e| e.ok())
-                .for_each(|e| recipients.push(e));
+                .for_each(|e| recipients.push(Box::new(e)));
         }
 
         let key_file = String::from(crate::data_dir().join("key.txt").to_string_lossy());
-        let key = match Identity::from_file(key_file) {
-            Ok(mut identities) => identities.pop(),
+        let key = match IdentityFile::from_file(key_file) {
+            Ok(identity_file) => identity_file
+                .into_identities()
+                .pop()
+                .map(|k| Box::new(k) as Box<dyn Identity>),
             _ => None,
         };
 
