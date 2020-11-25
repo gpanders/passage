@@ -13,17 +13,20 @@ fn main() {
         cmd::list(store)
     } else {
         let cmd = &args[1][..];
+        let arg = if args.len() > 2 {
+            Some(&args[2][..])
+        } else {
+            None
+        };
         match cmd {
             "list" => cmd::list(store),
-            "show" => {
-                if args.len() > 2 {
-                    cmd::show(store, &args[2])
-                } else {
-                    cmd::list(store)
-                }
-            }
+            "show" => match arg {
+                Some(arg) => cmd::show(store, arg),
+                None => cmd::list(store),
+            },
             "init" => cmd::init(store),
-            "insert" => cmd::insert(store, if args.len() > 2 { Some(&args[2]) } else { None }),
+            "insert" => cmd::insert(store, arg),
+            "rm" => cmd::remove(store, arg),
             _ => cmd::show(store, &args[1]),
         }
     };
