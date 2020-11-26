@@ -4,6 +4,7 @@ use secrecy::ExposeSecret;
 use std::fs;
 use std::io;
 use std::io::prelude::*;
+use std::path::PathBuf;
 
 pub fn insert(store: PasswordStore, item: Option<&str>) -> Result<(), Error> {
     if item.is_none() {
@@ -16,7 +17,9 @@ pub fn insert(store: PasswordStore, item: Option<&str>) -> Result<(), Error> {
         _ => unreachable!(),
     };
 
-    let path = store.dir.join(String::from(item) + ".age");
+    let path = store.dir.join(PathBuf::from(String::from(item) + ".age"));
+    fs::create_dir_all(&path.parent().unwrap())?;
+
     let mut file = match fs::OpenOptions::new()
         .create_new(true)
         .write(true)
