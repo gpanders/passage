@@ -5,17 +5,22 @@ use std::fs;
 use std::io;
 use std::io::prelude::*;
 
+#[cfg(unix)]
+use std::os::unix::fs::OpenOptionsExt;
+
 fn save_secret_key(key: &Identity) -> Result<(), Error> {
     let data_dir = passage::data_dir();
     if !data_dir.exists() {
         fs::create_dir_all(&data_dir)?;
     }
 
-    let mut key_file = match fs::OpenOptions::new()
-        .create_new(true)
-        .write(true)
-        .open(data_dir.join("key.txt"))
-    {
+    let mut options = fs::OpenOptions::new();
+    options.create_new(true).write(true);
+
+    #[cfg(unix)]
+    options.mode(0o600);
+
+    let mut key_file = match options.open(data_dir.join("key.txt")) {
         Ok(f) => f,
         Err(e) => match e.kind() {
             io::ErrorKind::AlreadyExists => return Err(Error::SecretKeyExists),
