@@ -44,8 +44,8 @@ fn main() {
             Some(item) => cmd::show(store, item),
             None => cmd::list(store),
         },
-        ("insert", Some(sub)) => cmd::insert(store, sub.value_of("item")),
-        ("remove", Some(sub)) => cmd::remove(store, sub.value_of("item")),
+        ("insert", Some(sub)) => cmd::insert(store, sub.value_of("item").unwrap()),
+        ("remove", Some(sub)) => cmd::remove(store, sub.value_of("item").unwrap()),
         (sub, _) => panic!("Unhandled subcommand: {}", sub),
     };
 
