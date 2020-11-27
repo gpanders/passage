@@ -6,17 +6,7 @@ use std::io;
 use std::io::prelude::*;
 use std::path::PathBuf;
 
-pub fn insert(store: PasswordStore, item: Option<&str>) -> Result<(), Error> {
-    if item.is_none() {
-        eprintln!("Usage: passage insert ITEM");
-        return Ok(());
-    }
-
-    let item = match item {
-        Some(i) => i,
-        _ => unreachable!(),
-    };
-
+pub fn insert(store: PasswordStore, item: &str) -> Result<(), Error> {
     let path = store.dir.join(PathBuf::from(item.to_string() + ".age"));
     fs::create_dir_all(&path.parent().unwrap())?;
 

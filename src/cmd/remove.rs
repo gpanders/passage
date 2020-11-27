@@ -3,17 +3,7 @@ use std::fs;
 use std::io;
 use std::io::prelude::*;
 
-pub fn remove(store: PasswordStore, item: Option<&str>) -> Result<(), Error> {
-    if item.is_none() {
-        eprintln!("Usage: passage rm ITEM");
-        return Ok(());
-    }
-
-    let item = match item {
-        Some(i) => i,
-        _ => unreachable!(),
-    };
-
+pub fn remove(store: PasswordStore, item: &str) -> Result<(), Error> {
     print!("Delete {}? [y/N] ", item);
     io::stdout().flush()?;
 
