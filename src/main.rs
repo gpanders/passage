@@ -1,14 +1,17 @@
 mod cmd;
 
-use clap::{App, Arg, SubCommand};
+use clap::{App, AppSettings, Arg, SubCommand};
 use passage::PasswordStore;
 use std::process;
 
 fn main() {
     let store = PasswordStore::new(dirs::home_dir().unwrap().join(".passage"));
 
-    let matches = App::new("passage")
-        .version("0.1.0")
+    let matches = App::new(clap::crate_name!())
+        .version(clap::crate_version!())
+        .setting(AppSettings::ArgsNegateSubcommands)
+        .setting(AppSettings::VersionlessSubcommands)
+        .arg(Arg::with_name("item").value_name("NAME"))
         .subcommand(
             SubCommand::with_name("init").about("Initialize a password store with a new key"),
         )
@@ -37,16 +40,19 @@ fn main() {
         )
         .get_matches();
 
-    let result = match matches.subcommand() {
-        ("init", Some(_)) => cmd::init(store),
-        ("list", Some(_)) => cmd::list(store),
-        ("show", Some(sub)) => match sub.value_of("item") {
-            Some(item) => cmd::show(store, item),
-            None => cmd::list(store),
+    let result = match matches.value_of("item") {
+        Some(item) => cmd::show(store, item),
+        None => match matches.subcommand() {
+            ("init", Some(_)) => cmd::init(store),
+            ("list", Some(_)) => cmd::list(store),
+            ("show", Some(sub)) => match sub.value_of("item") {
+                Some(item) => cmd::show(store, item),
+                None => cmd::list(store),
+            },
+            ("insert", Some(sub)) => cmd::insert(store, sub.value_of("item").unwrap()),
+            ("remove", Some(sub)) => cmd::remove(store, sub.value_of("item").unwrap()),
+            (_, _) => cmd::list(store),
         },
-        ("insert", Some(sub)) => cmd::insert(store, sub.value_of("item").unwrap()),
-        ("remove", Some(sub)) => cmd::remove(store, sub.value_of("item").unwrap()),
-        (sub, _) => panic!("Unhandled subcommand: {}", sub),
     };
 
     if let Err(e) = result {
