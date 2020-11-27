@@ -1,34 +1,52 @@
 mod cmd;
 
+use clap::{App, Arg, SubCommand};
 use passage::PasswordStore;
-use std::env;
 use std::process;
 
 fn main() {
     let store = PasswordStore::new(dirs::home_dir().unwrap().join(".passage"));
 
-    let args: Vec<String> = env::args().collect();
+    let matches = App::new("passage")
+        .version("0.1.0")
+        .subcommand(
+            SubCommand::with_name("init").about("Initialize a password store with a new key"),
+        )
+        .subcommand(
+            SubCommand::with_name("list")
+                .about("List passwords")
+                .alias("ls")
+                .arg(Arg::with_name("subfolder")),
+        )
+        .subcommand(
+            SubCommand::with_name("show")
+                .about("Decrypt and print a password")
+                .arg(Arg::with_name("item").value_name("NAME")),
+        )
+        .subcommand(
+            SubCommand::with_name("insert")
+                .about("Insert a new item into the password store")
+                .alias("add")
+                .arg(Arg::with_name("item").value_name("NAME").required(true)),
+        )
+        .subcommand(
+            SubCommand::with_name("remove")
+                .about("Remove an item from the password store")
+                .alias("rm")
+                .arg(Arg::with_name("item").value_name("NAME").required(true)),
+        )
+        .get_matches();
 
-    let result = if args.len() < 2 {
-        cmd::list(store)
-    } else {
-        let cmd = &args[1][..];
-        let arg = if args.len() > 2 {
-            Some(&args[2][..])
-        } else {
-            None
-        };
-        match cmd {
-            "list" => cmd::list(store),
-            "show" => match arg {
-                Some(arg) => cmd::show(store, arg),
-                None => cmd::list(store),
-            },
-            "init" => cmd::init(store),
-            "insert" => cmd::insert(store, arg),
-            "rm" => cmd::remove(store, arg),
-            _ => cmd::show(store, &args[1]),
-        }
+    let result = match matches.subcommand() {
+        ("init", Some(_)) => cmd::init(store),
+        ("list", Some(_)) => cmd::list(store),
+        ("show", Some(sub)) => match sub.value_of("item") {
+            Some(item) => cmd::show(store, item),
+            None => cmd::list(store),
+        },
+        ("insert", Some(sub)) => cmd::insert(store, sub.value_of("item")),
+        ("remove", Some(sub)) => cmd::remove(store, sub.value_of("item")),
+        (sub, _) => panic!("Unhandled subcommand: {}", sub),
     };
 
     if let Err(e) = result {
