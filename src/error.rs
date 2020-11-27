@@ -4,9 +4,6 @@ use std::io;
 
 #[derive(Debug)]
 pub enum Error {
-    DecryptError(age::DecryptError),
-    EncryptError(age::EncryptError),
-    IoError(io::Error),
     ItemNotFound(String),
     ItemAlreadyExists(String),
     StoreNotInitialized,
@@ -20,9 +17,6 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::DecryptError(inner) => write!(f, "Error: {}", inner),
-            Error::EncryptError(inner) => write!(f, "Error: {}", inner),
-            Error::IoError(inner) => write!(f, "Error: {}", inner),
             Error::ItemNotFound(item) => write!(f, "Error: {} is not in the password store.", item),
             Error::ItemAlreadyExists(item) => {
                 write!(f, "Error: {} already exists in the password store.", item)
@@ -41,32 +35,25 @@ impl fmt::Display for Error {
 
 impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        match self {
-            Error::DecryptError(inner) => Some(inner),
-            Error::EncryptError(inner) => match inner {
-                age::EncryptError::Io(e) => Some(e),
-            },
-            Error::IoError(inner) => Some(inner),
-            _ => None,
-        }
+        None
     }
 }
 
 impl From<io::Error> for Error {
     fn from(e: io::Error) -> Self {
-        Error::IoError(e)
+        Error::Other(e.to_string())
     }
 }
 
 impl From<age::DecryptError> for Error {
     fn from(e: age::DecryptError) -> Self {
-        Error::DecryptError(e)
+        Error::Other(e.to_string())
     }
 }
 
 impl From<age::EncryptError> for Error {
     fn from(e: age::EncryptError) -> Self {
-        Error::EncryptError(e)
+        Error::Other(e.to_string())
     }
 }
 

@@ -41,15 +41,13 @@ pub fn read_password(item: &str) -> Result<Option<String>, Error> {
         Ok(secret) => Ok(Some(secret.expose_secret().clone())),
         Err(pinentry::Error::Cancelled) => Ok(None),
         Err(pinentry::Error::Timeout) => Err(Error::PassphraseTimedOut),
-        Err(pinentry::Error::Encoding(e)) => Err(Error::IoError(io::Error::new(
-            io::ErrorKind::InvalidData,
-            e,
-        ))),
-        Err(pinentry::Error::Gpg(e)) => Err(Error::IoError(io::Error::new(
-            io::ErrorKind::Other,
-            format!("{}", e),
-        ))),
-        Err(pinentry::Error::Io(e)) => Err(Error::IoError(e)),
+        Err(pinentry::Error::Encoding(e)) => {
+            Err(io::Error::new(io::ErrorKind::InvalidData, e).into())
+        }
+        Err(pinentry::Error::Gpg(e)) => {
+            Err(io::Error::new(io::ErrorKind::Other, format!("{}", e)).into())
+        }
+        Err(pinentry::Error::Io(e)) => Err(e.into()),
     }
 }
 
@@ -72,7 +70,7 @@ pub fn decrypt(cypher: Vec<u8>, key: Box<dyn Identity>) -> Result<String, Error>
         match age::Decryptor::new(&cypher[..]) {
             Ok(d) => match d {
                 age::Decryptor::Recipients(d) => d,
-                _ => return Err(Error::DecryptError(age::DecryptError::KeyDecryptionFailed)),
+                _ => return Err(age::DecryptError::KeyDecryptionFailed.into()),
             },
             Err(e) => return Err(e.into()),
         }
@@ -85,7 +83,7 @@ pub fn decrypt(cypher: Vec<u8>, key: Box<dyn Identity>) -> Result<String, Error>
 
     match String::from_utf8(decrypted) {
         Ok(e) => Ok(e),
-        Err(_) => Err(Error::DecryptError(age::DecryptError::KeyDecryptionFailed)),
+        Err(_) => Err(age::DecryptError::KeyDecryptionFailed.into()),
     }
 }
 
