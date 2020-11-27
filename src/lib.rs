@@ -1,4 +1,6 @@
 use age::Identity;
+use secrecy::ExposeSecret;
+use std::io;
 use std::io::prelude::*;
 use std::iter;
 use std::path::PathBuf;
@@ -28,6 +30,27 @@ mod tests {
 
 pub fn data_dir() -> PathBuf {
     dirs::data_dir().unwrap().join("passage")
+}
+
+pub fn read_password(item: &str) -> Result<Option<String>, Error> {
+    match age::cli_common::read_secret(
+        &format!("Enter password for {}", item),
+        "Password",
+        Some(&format!("Retype password for {}", item)),
+    ) {
+        Ok(secret) => Ok(Some(secret.expose_secret().clone())),
+        Err(pinentry::Error::Cancelled) => Ok(None),
+        Err(pinentry::Error::Timeout) => Err(Error::PassphraseTimedOut),
+        Err(pinentry::Error::Encoding(e)) => Err(Error::IoError(io::Error::new(
+            io::ErrorKind::InvalidData,
+            e,
+        ))),
+        Err(pinentry::Error::Gpg(e)) => Err(Error::IoError(io::Error::new(
+            io::ErrorKind::Other,
+            format!("{}", e),
+        ))),
+        Err(pinentry::Error::Io(e)) => Err(Error::IoError(e)),
+    }
 }
 
 pub fn encrypt(
