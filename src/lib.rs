@@ -16,11 +16,11 @@ mod tests {
 
     #[test]
     fn encrypt_and_decrypt() {
-        let plaintext = String::from("Hello world!");
+        let plaintext = "Hello world!";
         let key = age::x25519::Identity::generate();
         let pubkey = key.to_public();
 
-        let encrypted = encrypt(&plaintext, vec![Box::new(pubkey)]).unwrap();
+        let encrypted = encrypt(plaintext, vec![Box::new(pubkey)]).unwrap();
         let decrypted = decrypt(encrypted, Box::new(key)).unwrap();
 
         assert_eq!(decrypted, plaintext);

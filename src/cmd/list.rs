@@ -11,7 +11,7 @@ fn is_hidden(entry: &DirEntry) -> bool {
         .map_or(false, |s| s.starts_with('.'))
 }
 
-fn tree(root: &Path, depth: usize, prefix: String) -> io::Result<()> {
+fn tree(root: &Path, depth: usize, prefix: &str) -> io::Result<()> {
     let mut entries = fs::read_dir(root)?
         .filter_map(|e| e.ok())
         .filter(|e| !is_hidden(e))
@@ -32,8 +32,8 @@ fn tree(root: &Path, depth: usize, prefix: String) -> io::Result<()> {
 
         if path.is_dir() {
             println!("{}", file_name.blue().bold());
-            let next_prefix = prefix.clone() + if is_last { "    " } else { "│   " };
-            tree(&path, depth + 1, next_prefix)?;
+            let next_prefix = prefix.to_string().clone() + if is_last { "    " } else { "│   " };
+            tree(&path, depth + 1, &next_prefix)?;
         } else {
             let file_name = match file_name.strip_suffix(".age") {
                 Some(e) => e,
@@ -53,7 +53,7 @@ pub fn list(store: PasswordStore) -> Result<(), Error> {
     }
 
     println!("Password Store");
-    tree(&store.dir, 1, String::from(""))?;
+    tree(&store.dir, 1, "")?;
 
     Ok(())
 }

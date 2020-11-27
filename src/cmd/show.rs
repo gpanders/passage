@@ -4,7 +4,7 @@ use std::fs;
 use std::path::PathBuf;
 
 pub fn show(store: PasswordStore, item: &str) -> Result<(), Error> {
-    let file = store.dir.join(PathBuf::from(String::from(item) + ".age"));
+    let file = store.dir.join(PathBuf::from(item.to_string() + ".age"));
     if !file.exists() {
         return Err(Error::ItemNotFound(item.into()));
     }

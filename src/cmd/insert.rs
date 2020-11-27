@@ -17,7 +17,7 @@ pub fn insert(store: PasswordStore, item: Option<&str>) -> Result<(), Error> {
         _ => unreachable!(),
     };
 
-    let path = store.dir.join(PathBuf::from(String::from(item) + ".age"));
+    let path = store.dir.join(PathBuf::from(item.to_string() + ".age"));
     fs::create_dir_all(&path.parent().unwrap())?;
 
     let mut file = match fs::OpenOptions::new()

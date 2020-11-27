@@ -25,7 +25,7 @@ pub fn remove(store: PasswordStore, item: Option<&str>) -> Result<(), Error> {
         return Ok(());
     }
 
-    if let Err(e) = fs::remove_file(store.dir.join(String::from(item) + ".age")) {
+    if let Err(e) = fs::remove_file(store.dir.join(item.to_string() + ".age")) {
         match e.kind() {
             io::ErrorKind::NotFound => {
                 eprintln!("{} does not exist in the password store.", item);
