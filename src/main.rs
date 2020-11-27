@@ -24,7 +24,13 @@ fn main() {
         .subcommand(
             SubCommand::with_name("show")
                 .about("Decrypt and print a password")
-                .arg(Arg::with_name("item").value_name("NAME")),
+                .arg(Arg::with_name("item").value_name("NAME"))
+                .arg(
+                    Arg::with_name("clip")
+                        .short("c")
+                        .long("clip")
+                        .requires("item"),
+                ),
         )
         .subcommand(
             SubCommand::with_name("insert")
@@ -41,12 +47,12 @@ fn main() {
         .get_matches();
 
     let result = match matches.value_of("item") {
-        Some(item) => cmd::show(store, item),
+        Some(item) => cmd::show(store, item, false),
         None => match matches.subcommand() {
             ("init", Some(_)) => cmd::init(store),
             ("list", Some(_)) => cmd::list(store),
             ("show", Some(sub)) => match sub.value_of("item") {
-                Some(item) => cmd::show(store, item),
+                Some(item) => cmd::show(store, item, sub.is_present("clip")),
                 None => cmd::list(store),
             },
             ("insert", Some(sub)) => cmd::insert(store, sub.value_of("item").unwrap()),

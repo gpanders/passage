@@ -75,3 +75,9 @@ impl From<String> for Error {
         Error::Other(e)
     }
 }
+
+impl From<Box<dyn error::Error>> for Error {
+    fn from(e: Box<dyn error::Error>) -> Self {
+        Error::Other(e.to_string())
+    }
+}

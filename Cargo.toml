@@ -15,3 +15,4 @@ age = { version = "0.5", features = ["cli-common"] }
 secrecy = "0.7"
 pinentry = "0.2"
 clap = "2"
+clipboard = "0.5"
