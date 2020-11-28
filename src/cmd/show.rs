@@ -28,7 +28,7 @@ pub fn show(store: PasswordStore, item: &str, copy_to_clipboard: bool) -> Result
         ctx.set_contents(first_line.to_string())?;
         println!("Copied password for {} to clipboard.", item);
     } else {
-        println!("{}", decrypted);
+        print!("{}", decrypted);
     }
 
     Ok(())
