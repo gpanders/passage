@@ -1,37 +1,6 @@
-use age::x25519::Identity;
 use passage::{Error, PasswordStore};
-use secrecy::ExposeSecret;
 use std::fs;
-use std::io;
 use std::io::prelude::*;
-
-#[cfg(unix)]
-use std::os::unix::fs::OpenOptionsExt;
-
-fn save_secret_key(key: &Identity) -> Result<(), Error> {
-    let data_dir = passage::data_dir();
-    if !data_dir.exists() {
-        fs::create_dir_all(&data_dir)?;
-    }
-
-    let mut options = fs::OpenOptions::new();
-    options.create_new(true).write(true);
-
-    #[cfg(unix)]
-    options.mode(0o600);
-
-    let mut key_file = match options.open(data_dir.join("key.txt")) {
-        Ok(f) => f,
-        Err(e) => match e.kind() {
-            io::ErrorKind::AlreadyExists => return Err(Error::SecretKeyExists),
-            _ => return Err(e.into()),
-        },
-    };
-
-    key_file.write_all(key.to_string().expose_secret().as_bytes())?;
-
-    Ok(())
-}
 
 pub fn init(store: PasswordStore) -> Result<(), Error> {
     if !store.dir.exists() {
@@ -39,7 +8,8 @@ pub fn init(store: PasswordStore) -> Result<(), Error> {
     }
 
     let key = age::x25519::Identity::generate();
-    save_secret_key(&key)?;
+    let path = passage::data_dir().join("key.txt");
+    passage::save_secret_key(&key, &path, false)?;
 
     let mut public_keys = fs::OpenOptions::new()
         .create(true)

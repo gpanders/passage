@@ -20,12 +20,8 @@ pub fn insert(store: PasswordStore, item: &str) -> Result<(), Error> {
         },
     };
 
-    let password = match passage::read_password(item)? {
-        Some(password) => password,
-        None => return Ok(()),
-    };
-
-    let encrypted = passage::encrypt(&password, store.recipients)?;
+    let password = passage::read_password(item)?;
+    let encrypted = passage::encrypt_with_keys(&password, store.recipients)?;
     file.write_all(&encrypted[..])?;
 
     println!("Created new entry in the password store for {}.", item);

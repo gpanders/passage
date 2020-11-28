@@ -57,6 +57,12 @@ impl From<age::EncryptError> for Error {
     }
 }
 
+impl From<pinentry::Error> for Error {
+    fn from(e: pinentry::Error) -> Self {
+        Error::Other(e.to_string())
+    }
+}
+
 impl From<String> for Error {
     fn from(e: String) -> Self {
         Error::Other(e)
