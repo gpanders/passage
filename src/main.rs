@@ -11,6 +11,13 @@ fn main() {
         .version(clap::crate_version!())
         .setting(AppSettings::ArgsNegateSubcommands)
         .setting(AppSettings::VersionlessSubcommands)
+        .arg(
+            Arg::with_name("clip")
+                .short("c")
+                .long("clip")
+                .requires("item")
+                .hidden(true),
+        )
         .arg(Arg::with_name("item").value_name("NAME"))
         .subcommand(
             SubCommand::with_name("init").about("Initialize a password store with a new key"),
@@ -27,6 +34,7 @@ fn main() {
                 .arg(Arg::with_name("item").value_name("NAME"))
                 .arg(
                     Arg::with_name("clip")
+                        .help("Copy password to the system clipboard")
                         .short("c")
                         .long("clip")
                         .requires("item"),
@@ -46,19 +54,20 @@ fn main() {
         )
         .get_matches();
 
-    let result = match matches.value_of("item") {
-        Some(item) => cmd::show(store, item, false),
-        None => match matches.subcommand() {
-            ("init", Some(_)) => cmd::init(store),
-            ("list", Some(_)) => cmd::list(store),
-            ("show", Some(sub)) => match sub.value_of("item") {
-                Some(item) => cmd::show(store, item, sub.is_present("clip")),
-                None => cmd::list(store),
-            },
-            ("insert", Some(sub)) => cmd::insert(store, sub.value_of("item").unwrap()),
-            ("remove", Some(sub)) => cmd::remove(store, sub.value_of("item").unwrap()),
-            (_, _) => cmd::list(store),
+    let result = match matches.subcommand() {
+        ("show", Some(sub)) => match sub.value_of("item") {
+            Some(item) => cmd::show(store, item, sub.is_present("clip")),
+            None => cmd::list(store),
         },
+        ("init", Some(_)) => cmd::init(store),
+        ("list", Some(_)) => cmd::list(store),
+        ("insert", Some(sub)) => cmd::insert(store, sub.value_of("item").unwrap()),
+        ("remove", Some(sub)) => cmd::remove(store, sub.value_of("item").unwrap()),
+        ("", None) => match matches.value_of("item") {
+            Some(item) => cmd::show(store, item, matches.is_present("clip")),
+            None => cmd::list(store),
+        },
+        _ => unreachable!(),
     };
 
     if let Err(e) = result {
