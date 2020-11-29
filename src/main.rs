@@ -23,12 +23,6 @@ fn main() {
             SubCommand::with_name("init").about("Initialize a password store with a new key"),
         )
         .subcommand(
-            SubCommand::with_name("list")
-                .about("List passwords")
-                .alias("ls")
-                .arg(Arg::with_name("subfolder")),
-        )
-        .subcommand(
             SubCommand::with_name("show")
                 .about("Decrypt and print a password")
                 .arg(Arg::with_name("item").value_name("NAME"))
@@ -39,6 +33,12 @@ fn main() {
                         .long("clip")
                         .requires("item"),
                 ),
+        )
+        .subcommand(
+            SubCommand::with_name("list")
+                .about("List passwords")
+                .alias("ls")
+                .arg(Arg::with_name("subfolder")),
         )
         .subcommand(
             SubCommand::with_name("insert")
@@ -52,6 +52,14 @@ fn main() {
                 .alias("rm")
                 .arg(Arg::with_name("item").value_name("NAME").required(true)),
         )
+        .subcommand(
+            SubCommand::with_name("lock")
+                .about("Lock the password store by encrypting the private key with a passphrase"),
+        )
+        .subcommand(
+            SubCommand::with_name("unlock")
+                .about("Unlock the password store by decrypted the private key"),
+        )
         .get_matches();
 
     let result = match matches.subcommand() {
@@ -61,6 +69,8 @@ fn main() {
         },
         ("init", Some(_)) => cmd::init(store),
         ("list", Some(_)) => cmd::list(store),
+        ("lock", Some(_)) => cmd::lock(),
+        ("unlock", Some(_)) => cmd::unlock(),
         ("insert", Some(sub)) => cmd::insert(store, sub.value_of("item").unwrap()),
         ("remove", Some(sub)) => cmd::remove(store, sub.value_of("item").unwrap()),
         ("", None) => match matches.value_of("item") {

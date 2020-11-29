@@ -8,8 +8,7 @@ pub fn init(store: PasswordStore) -> Result<(), Error> {
     }
 
     let key = age::x25519::Identity::generate();
-    let path = passage::data_dir().join("key.txt");
-    passage::save_secret_key(&key, &path, false)?;
+    passage::save_secret_key(&key, passage::secret_key_path(), false)?;
 
     let mut public_keys = fs::OpenOptions::new()
         .create(true)

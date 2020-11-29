@@ -52,6 +52,18 @@ or simply
 
     $ passage path/to/item
 
+You can lock your password store using
+
+    $ passage lock
+
+This will prompt you for a passphrase, which will be used to encrypt your
+secret key. When locked, you will need to enter this passphrase anytime you
+wish to display a password from the store.
+
+You can unlocked a locked password store using
+
+    $ passage unlock
+
 You can view all items in your store with
 
     $ passage list

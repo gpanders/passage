@@ -2,25 +2,26 @@ use age::{
     x25519::{Identity, Recipient},
     IdentityFile,
 };
-use secrecy::{ExposeSecret, Secret};
+use secrecy::{ExposeSecret, SecretString};
 use std::fs::{self, File};
+use std::io;
 use std::io::prelude::*;
-use std::io::{self, BufReader};
 use std::iter;
 use std::path::{Path, PathBuf};
 
 #[cfg(unix)]
 use std::os::unix::fs::OpenOptionsExt;
 
-pub use crate::error::Error;
-pub use crate::store::PasswordStore;
-
 mod error;
+pub use crate::error::Error;
+
 mod store;
+pub use crate::store::PasswordStore;
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use secrecy::Secret;
     use std::env;
 
     #[test]
@@ -30,7 +31,7 @@ mod tests {
         let pubkey = key.to_public();
 
         let encrypted = encrypt_with_keys(plaintext, vec![pubkey])?;
-        let decrypted = decrypt_with_key(encrypted, &key)?;
+        let decrypted = decrypt_with_key(&encrypted, &key)?;
 
         assert_eq!(decrypted, plaintext);
 
@@ -40,10 +41,10 @@ mod tests {
     #[test]
     fn encrypt_and_decrypt_with_passphrase() -> Result<(), Error> {
         let plaintext = "Testing encrypt_and_decrypt_with_passphrase";
-        let passphrase = "correct horse battery staple";
+        let passphrase = Secret::new("correct horse battery staple".to_string());
 
-        let encrypted = encrypt_with_passphrase(plaintext, passphrase)?;
-        let decrypted = decrypt_with_passphrase(encrypted, Some(passphrase))?;
+        let encrypted = encrypt_with_passphrase(plaintext, &passphrase)?;
+        let decrypted = decrypt_with_passphrase(&encrypted, &passphrase)?;
 
         assert_eq!(decrypted, plaintext);
 
@@ -60,7 +61,7 @@ mod tests {
         save_secret_key(&key, &path, true)?;
 
         let key = read_secret_key(&path)?;
-        let decrypted = decrypt_with_key(encrypted, &key.unwrap())?;
+        let decrypted = decrypt_with_key(&encrypted, &key.unwrap())?;
 
         assert_eq!(decrypted, plaintext);
 
@@ -68,8 +69,8 @@ mod tests {
     }
 }
 
-pub fn data_dir() -> PathBuf {
-    dirs::data_dir().unwrap().join("passage")
+pub fn secret_key_path() -> PathBuf {
+    dirs::data_dir().unwrap().join("passage").join("key.txt")
 }
 
 pub fn save_secret_key<P: AsRef<Path>>(key: &Identity, path: P, force: bool) -> Result<(), Error> {
@@ -79,7 +80,7 @@ pub fn save_secret_key<P: AsRef<Path>>(key: &Identity, path: P, force: bool) -> 
     }
 
     let mut options = fs::OpenOptions::new();
-    options.write(true);
+    options.write(true).truncate(true);
 
     if force {
         options.create(true);
@@ -116,8 +117,10 @@ pub fn read_secret_key<P: AsRef<Path>>(path: P) -> Result<Option<Identity>, Erro
             let mut bytes = vec![];
             File::open(path)?.read_to_end(&mut bytes)?;
 
-            let decrypted = decrypt_with_passphrase(bytes, None)?;
-            match IdentityFile::from_buffer(BufReader::new(decrypted.as_bytes())) {
+            let passphrase =
+                age::cli_common::read_secret("Passphrase for secret key", "Passphrase", None)?;
+            let decrypted = decrypt_with_passphrase(&bytes, &passphrase)?;
+            match IdentityFile::from_buffer(decrypted.as_bytes()) {
                 Ok(identity_file) => Ok(identity_file.into_identities().pop()),
                 Err(e) => Err(e.into()),
             }
@@ -125,19 +128,36 @@ pub fn read_secret_key<P: AsRef<Path>>(path: P) -> Result<Option<Identity>, Erro
     }
 }
 
-pub fn read_password(item: &str) -> Result<String, Error> {
-    match age::cli_common::read_secret(
-        &format!("Enter password for {}", item),
-        "Password",
-        Some(&format!("Retype password for {}", item)),
-    ) {
-        Ok(secret) => Ok(secret.expose_secret().clone()),
-        Err(e) => Err(e.into()),
-    }
+pub fn encrypt_secret_key<P: AsRef<Path>>(path: P, passphrase: &SecretString) -> Result<(), Error> {
+    let key = read_secret_key(&path)?.ok_or_else(|| Error::NoSecretKey)?;
+
+    let encrypted = encrypt_with_passphrase(&key.to_string().expose_secret(), &passphrase)?;
+
+    File::create(&path)?.write_all(&encrypted)?;
+
+    Ok(())
 }
 
-pub fn encrypt_with_passphrase(plaintext: &str, passphrase: &str) -> Result<Vec<u8>, Error> {
-    let encryptor = age::Encryptor::with_user_passphrase(Secret::new(passphrase.to_owned()));
+pub fn decrypt_secret_key<P: AsRef<Path>>(path: P, passphrase: &SecretString) -> Result<(), Error> {
+    let mut encrypted = vec![];
+    File::open(&path)?.read_to_end(&mut encrypted)?;
+
+    let key =
+        IdentityFile::from_buffer(decrypt_with_passphrase(&encrypted, passphrase)?.as_bytes())?
+            .into_identities()
+            .pop()
+            .ok_or_else(|| Error::NoSecretKey)?;
+
+    save_secret_key(&key, path, true)?;
+
+    Ok(())
+}
+
+pub fn encrypt_with_passphrase(
+    plaintext: &str,
+    passphrase: &SecretString,
+) -> Result<Vec<u8>, Error> {
+    let encryptor = age::Encryptor::with_user_passphrase(passphrase.to_owned());
     let mut encrypted = vec![];
     let mut writer = encryptor.wrap_output(&mut encrypted)?;
     writer.write_all(plaintext.as_bytes())?;
@@ -146,19 +166,14 @@ pub fn encrypt_with_passphrase(plaintext: &str, passphrase: &str) -> Result<Vec<
     Ok(encrypted)
 }
 
-pub fn decrypt_with_passphrase(cypher: Vec<u8>, passphrase: Option<&str>) -> Result<String, Error> {
-    let decryptor = match age::Decryptor::new(&cypher[..])? {
+pub fn decrypt_with_passphrase(cypher: &[u8], passphrase: &SecretString) -> Result<String, Error> {
+    let decryptor = match age::Decryptor::new(cypher)? {
         age::Decryptor::Passphrase(decryptor) => decryptor,
         _ => return Err(age::DecryptError::DecryptionFailed.into()),
     };
 
-    let passphrase = match passphrase {
-        Some(p) => Secret::new(p.to_owned()),
-        None => age::cli_common::read_secret("Passphrase", "Passphrase", None)?,
-    };
-
     let mut decrypted = vec![];
-    let mut reader = decryptor.decrypt(&passphrase, None)?;
+    let mut reader = decryptor.decrypt(passphrase, None)?;
     reader.read_to_end(&mut decrypted)?;
 
     match String::from_utf8(decrypted) {
@@ -183,9 +198,9 @@ pub fn encrypt_with_keys(plaintext: &str, recipients: Vec<Recipient>) -> Result<
     Ok(encrypted)
 }
 
-pub fn decrypt_with_key(cypher: Vec<u8>, key: &Identity) -> Result<String, Error> {
+pub fn decrypt_with_key(cypher: &[u8], key: &Identity) -> Result<String, Error> {
     let decryptor = {
-        match age::Decryptor::new(&cypher[..]) {
+        match age::Decryptor::new(cypher) {
             Ok(d) => match d {
                 age::Decryptor::Recipients(d) => d,
                 _ => return Err(age::DecryptError::KeyDecryptionFailed.into()),
@@ -224,7 +239,7 @@ pub fn decrypt_with_key(cypher: Vec<u8>, key: &Identity) -> Result<String, Error
 
 //         let secret = decrypt(cypher, key)?;
 //         let cypher = encrypt(&secret, store.recipients)?;
-//         file.write_all(&cypher[..])?;
+//         file.write_all(&cypher)?;
 //     }
 
 //     Ok(())
