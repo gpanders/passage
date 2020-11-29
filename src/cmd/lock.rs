@@ -1,8 +1,7 @@
-use age::cli_common::read_secret;
 use passage::Error;
 
 pub fn lock() -> Result<(), Error> {
-    let passphrase = read_secret("Passphrase", "Passphrase", None)?;
+    let passphrase = passage::read_secret("Enter passphrase", Some("Confirm passphrase"))?;
     passage::encrypt_secret_key(passage::secret_key_path(), &passphrase)?;
 
     println!("Password store locked.");
@@ -10,7 +9,7 @@ pub fn lock() -> Result<(), Error> {
 }
 
 pub fn unlock() -> Result<(), Error> {
-    let passphrase = read_secret("Passphrase", "Passphrase", None)?;
+    let passphrase = passage::read_secret("Enter passphrase", None)?;
     passage::decrypt_secret_key(passage::secret_key_path(), &passphrase)?;
 
     println!("Password store unlocked.");

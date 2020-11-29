@@ -1,6 +1,4 @@
-use age::cli_common::read_secret;
 use passage::{Error, PasswordStore};
-use secrecy::ExposeSecret;
 use std::fs;
 use std::io;
 use std::io::prelude::*;
@@ -22,14 +20,10 @@ pub fn insert(store: PasswordStore, item: &str) -> Result<(), Error> {
         },
     };
 
-    let password = match read_secret(
+    let password = passage::read_secret(
         &format!("Enter password for {}", item),
-        "Password",
         Some(&format!("Retype password for {}", item)),
-    ) {
-        Ok(secret) => secret.expose_secret().clone(),
-        Err(e) => return Err(e.into()),
-    };
+    )?;
 
     let encrypted = passage::encrypt_with_keys(&password, store.recipients)?;
     file.write_all(&encrypted)?;
