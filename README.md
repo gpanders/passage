@@ -20,9 +20,12 @@ prioritizing speed and eschewing the use of PGP [[1][pgp-1], [2][pgp-2]].
 
 Currently, the only supported method of installation is through Cargo.
 
+    $ cargo install --git https://git.sr.ht/~gpanders/passage
+
+Or, to build from a locally cloned copy of this repository,
+
     $ git clone https://git.sr.ht/~gpanders/passage
-    $ cd passage
-    $ cargo install
+    $ cargo install --path passage
 
 ## Usage
 
@@ -60,7 +63,12 @@ This will prompt you for a passphrase, which will be used to encrypt your
 secret key. When locked, you will need to enter this passphrase anytime you
 wish to display a password from the store.
 
-You can unlocked a locked password store using
+Note that locking the password store will only require a passphrase when
+retrieving a password from the store, **not** when inserting a new password
+into the store. This is because only the secret key is encrypted with the
+passphrase. The public key used to add new items remains unencrypted.
+
+You can unlock a locked password store using
 
     $ passage unlock
 
