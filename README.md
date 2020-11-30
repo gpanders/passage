@@ -45,9 +45,13 @@ and create your password store at `$HOME/.passage`.
 
 Add a new password to the password store using
 
-    $ passage init path/to/item
+    $ passage insert path/to/item
 
-and you can retrieve a saved password from the store using
+or
+
+    $ passage add path/to/item
+
+You can retrieve a saved password from the store using
 
     $ passage show path/to/item
 
