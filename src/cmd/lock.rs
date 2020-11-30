@@ -9,9 +9,7 @@ pub fn lock() -> Result<(), Error> {
 }
 
 pub fn unlock() -> Result<(), Error> {
-    let passphrase = passage::read_secret("Enter passphrase", None)?;
-    passage::decrypt_secret_key(passage::secret_key_path(), &passphrase)?;
-
+    passage::decrypt_secret_key(passage::secret_key_path(), None)?;
     println!("Password store unlocked.");
     Ok(())
 }

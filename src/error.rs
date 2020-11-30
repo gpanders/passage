@@ -9,6 +9,7 @@ pub enum Error {
     StoreNotInitialized,
     NoSecretKey,
     SecretKeyExists,
+    KeyNotEncrypted,
     PasswordsDoNotMatch,
     PassphraseTimedOut,
     Other(String),
@@ -22,12 +23,13 @@ impl fmt::Display for Error {
                 write!(f, "Error: {} already exists in the password store.", item)
             }
             Error::StoreNotInitialized => {
-                write!(f, "Error: password store is empty. Try \"passage init\".")
+                write!(f, "Password store is empty. Try \"passage init\".")
             }
-            Error::NoSecretKey => write!(f, "Error: no secret key found. Try \"passage init\"."),
+            Error::NoSecretKey => write!(f, "No secret key found. Try \"passage init\"."),
             Error::SecretKeyExists => write!(f, "Error: secret key already exists."),
+            Error::KeyNotEncrypted => write!(f, "Password store is not encrypted."),
             Error::PasswordsDoNotMatch => write!(f, "Error: passwords do not match."),
-            Error::PassphraseTimedOut => write!(f, "Error: passphrase entry timed out."),
+            Error::PassphraseTimedOut => write!(f, "Passphrase entry timed out."),
             Error::Other(msg) => write!(f, "Error: {}", msg),
         }
     }

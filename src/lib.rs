@@ -132,7 +132,7 @@ pub fn read_secret_key<P: AsRef<Path>>(path: P) -> Result<Option<Identity>, Erro
             File::open(path)?.read_to_end(&mut bytes)?;
 
             let passphrase = read_secret("Passphrase for secret key", None)?;
-            let decrypted = decrypt_with_passphrase(&bytes, &passphrase)?;
+            let decrypted = decrypt_with_passphrase(&bytes, Some(&passphrase))?;
             match IdentityFile::from_buffer(decrypted.as_bytes()) {
                 Ok(identity_file) => Ok(identity_file.into_identities().pop()),
                 Err(e) => Err(e.into()),
@@ -151,7 +151,7 @@ pub fn encrypt_secret_key<P: AsRef<Path>>(path: P, passphrase: &str) -> Result<(
     Ok(())
 }
 
-pub fn decrypt_secret_key<P: AsRef<Path>>(path: P, passphrase: &str) -> Result<(), Error> {
+pub fn decrypt_secret_key<P: AsRef<Path>>(path: P, passphrase: Option<&str>) -> Result<(), Error> {
     let mut encrypted = vec![];
     File::open(&path)?.read_to_end(&mut encrypted)?;
 
@@ -176,14 +176,18 @@ pub fn encrypt_with_passphrase(plaintext: &str, passphrase: &str) -> Result<Vec<
     Ok(encrypted)
 }
 
-pub fn decrypt_with_passphrase(cypher: &[u8], passphrase: &str) -> Result<String, Error> {
-    let decryptor = match age::Decryptor::new(cypher)? {
-        age::Decryptor::Passphrase(decryptor) => decryptor,
-        _ => return Err(age::DecryptError::DecryptionFailed.into()),
+pub fn decrypt_with_passphrase(cypher: &[u8], passphrase: Option<&str>) -> Result<String, Error> {
+    let decryptor = match age::Decryptor::new(cypher) {
+        Ok(d) => match d {
+            age::Decryptor::Passphrase(decryptor) => decryptor,
+            _ => return Err(age::DecryptError::DecryptionFailed.into()),
+        },
+        _ => return Err(Error::KeyNotEncrypted),
     };
 
+    let passphrase = passphrase.map_or(read_secret("Passphrase", None)?, |s| s.to_owned());
     let mut decrypted = vec![];
-    let mut reader = decryptor.decrypt(&Secret::new(passphrase.to_owned()), None)?;
+    let mut reader = decryptor.decrypt(&Secret::new(passphrase), None)?;
     reader.read_to_end(&mut decrypted)?;
 
     match String::from_utf8(decrypted) {
