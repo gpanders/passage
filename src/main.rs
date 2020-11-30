@@ -54,11 +54,11 @@ fn main() {
         )
         .subcommand(
             SubCommand::with_name("lock")
-                .about("Lock the password store by encrypting the private key with a passphrase"),
+                .about("Lock the password store by encrypting the secret key with a passphrase"),
         )
         .subcommand(
             SubCommand::with_name("unlock")
-                .about("Unlock the password store by decrypted the private key"),
+                .about("Unlock the password store by decrypting the secret key"),
         )
         .get_matches();
 
