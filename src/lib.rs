@@ -42,8 +42,8 @@ mod tests {
         let plaintext = "Testing encrypt_and_decrypt_with_passphrase";
         let passphrase = "correct horse battery staple";
 
-        let encrypted = encrypt_with_passphrase(plaintext, &passphrase)?;
-        let decrypted = decrypt_with_passphrase(&encrypted, &passphrase)?;
+        let encrypted = encrypt_with_passphrase(plaintext, passphrase)?;
+        let decrypted = decrypt_with_passphrase(&encrypted, Some(passphrase))?;
 
         assert_eq!(decrypted, plaintext);
 
@@ -185,7 +185,11 @@ pub fn decrypt_with_passphrase(cypher: &[u8], passphrase: Option<&str>) -> Resul
         _ => return Err(Error::KeyNotEncrypted),
     };
 
-    let passphrase = passphrase.map_or(read_secret("Passphrase", None)?, |s| s.to_owned());
+    let passphrase = match passphrase {
+        Some(s) => s.to_owned(),
+        None => read_secret("Passphrase", None)?,
+    };
+
     let mut decrypted = vec![];
     let mut reader = decryptor.decrypt(&Secret::new(passphrase), None)?;
     reader.read_to_end(&mut decrypted)?;
