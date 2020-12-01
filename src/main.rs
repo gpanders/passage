@@ -81,7 +81,7 @@ fn main() {
     };
 
     if let Err(e) = result {
-        eprintln!("{}", e);
+        eprintln!("Error: {}", e);
         process::exit(1);
     }
 }

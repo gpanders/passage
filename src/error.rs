@@ -18,19 +18,21 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::ItemNotFound(item) => write!(f, "Error: {} is not in the password store.", item),
+            Error::ItemNotFound(item) => write!(f, "{} is not in the password store.", item),
             Error::ItemAlreadyExists(item) => {
-                write!(f, "Error: {} already exists in the password store.", item)
+                write!(f, "{} already exists in the password store.", item)
             }
             Error::StoreNotInitialized => {
                 write!(f, "Password store is empty. Try \"passage init\".")
             }
             Error::NoSecretKey => write!(f, "No secret key found. Try \"passage init\"."),
-            Error::SecretKeyExists => write!(f, "Error: secret key already exists."),
+            Error::SecretKeyExists => {
+                write!(f, "Secret key already exists. Use --force to overwrite.")
+            }
             Error::KeyNotEncrypted => write!(f, "Password store is not encrypted."),
-            Error::PasswordsDoNotMatch => write!(f, "Error: passwords do not match."),
+            Error::PasswordsDoNotMatch => write!(f, "Passwords do not match."),
             Error::PassphraseTimedOut => write!(f, "Passphrase entry timed out."),
-            Error::Other(msg) => write!(f, "Error: {}", msg),
+            Error::Other(msg) => write!(f, "{}", msg),
         }
     }
 }
