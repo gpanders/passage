@@ -20,7 +20,24 @@ fn main() {
         )
         .arg(Arg::with_name("item").value_name("NAME"))
         .subcommand(
-            SubCommand::with_name("init").about("Initialize a password store with a new key"),
+            SubCommand::with_name("init")
+                .about("Initialize a password store with a new key")
+                .arg(
+                    Arg::with_name("recipients")
+                        .help("Add an additional recipient to the password store")
+                        .short("r")
+                        .long("recipients")
+                        .multiple(true)
+                        .number_of_values(1)
+                        .takes_value(true),
+                )
+                .arg(
+                    Arg::with_name("key")
+                        .help("Initialize store with an existing secret key")
+                        .short("k")
+                        .long("key")
+                        .takes_value(true),
+                ),
         )
         .subcommand(
             SubCommand::with_name("show")
@@ -67,7 +84,12 @@ fn main() {
             Some(item) => cmd::show(store, item, sub.is_present("clip")),
             None => cmd::list(store),
         },
-        ("init", Some(_)) => cmd::init(store),
+        ("init", Some(sub)) => {
+            let recipients = sub
+                .values_of("recipients")
+                .map(|v| v.map(|s| s.parse()).filter_map(|r| r.ok()).collect());
+            cmd::init(store, recipients, sub.value_of("key").map(|s| s.to_owned()))
+        }
         ("list", Some(_)) => cmd::list(store),
         ("lock", Some(_)) => cmd::lock(),
         ("unlock", Some(_)) => cmd::unlock(),

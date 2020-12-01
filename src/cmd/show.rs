@@ -10,11 +10,7 @@ pub fn show(store: PasswordStore, item: &str, copy_to_clipboard: bool) -> Result
         return Err(Error::ItemNotFound(item.into()));
     }
 
-    let key = match passage::read_secret_key(passage::secret_key_path())? {
-        Some(key) => key,
-        None => return Err(Error::NoSecretKey),
-    };
-
+    let key = passage::read_secret_key(passage::secret_key_path())?;
     let buf = fs::read(file).unwrap();
     let decrypted = passage::decrypt_with_key(&buf, &key)?;
 

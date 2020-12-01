@@ -3,7 +3,7 @@ use age::{
     IdentityFile,
 };
 use secrecy::{ExposeSecret, Secret};
-use std::fs::{self, File};
+use std::fs::{self, DirEntry, File};
 use std::io;
 use std::io::prelude::*;
 use std::iter;
@@ -29,7 +29,7 @@ mod tests {
         let key = Identity::generate();
         let pubkey = key.to_public();
 
-        let encrypted = encrypt_with_keys(plaintext, vec![pubkey])?;
+        let encrypted = encrypt_with_keys(plaintext, &[pubkey])?;
         let decrypted = decrypt_with_key(&encrypted, &key)?;
 
         assert_eq!(decrypted, plaintext);
@@ -55,7 +55,7 @@ mod tests {
         let plaintext = "Testing saving_and_reading_secret_key";
         let key = Identity::generate();
         let path = env::temp_dir().join("key.txt");
-        let encrypted = encrypt_with_keys(plaintext, vec![key.to_public()])?;
+        let encrypted = encrypt_with_keys(plaintext, &[key.to_public()])?;
 
         save_secret_key(&key, &path, true)?;
 
@@ -118,14 +118,17 @@ pub fn save_secret_key<P: AsRef<Path>>(key: &Identity, path: P, force: bool) -> 
     Ok(())
 }
 
-pub fn read_secret_key<P: AsRef<Path>>(path: P) -> Result<Option<Identity>, Error> {
+pub fn read_secret_key<P: AsRef<Path>>(path: P) -> Result<Identity, Error> {
     let path = path.as_ref();
     if !path.exists() {
-        return Ok(None);
+        return Err(Error::NoSecretKey);
     }
 
     match IdentityFile::from_file(path.to_str().unwrap().to_string()) {
-        Ok(identity_file) => Ok(identity_file.into_identities().pop()),
+        Ok(identity_file) => identity_file
+            .into_identities()
+            .pop()
+            .ok_or(Error::NoSecretKey),
         // The key file might be encrypted with a passphrase
         Err(_) => {
             let mut bytes = vec![];
@@ -134,7 +137,10 @@ pub fn read_secret_key<P: AsRef<Path>>(path: P) -> Result<Option<Identity>, Erro
             let passphrase = read_secret("Passphrase for secret key", None)?;
             let decrypted = decrypt_with_passphrase(&bytes, Some(&passphrase))?;
             match IdentityFile::from_buffer(decrypted.as_bytes()) {
-                Ok(identity_file) => Ok(identity_file.into_identities().pop()),
+                Ok(identity_file) => identity_file
+                    .into_identities()
+                    .pop()
+                    .ok_or(Error::NoSecretKey),
                 Err(e) => Err(e.into()),
             }
         }
@@ -142,8 +148,7 @@ pub fn read_secret_key<P: AsRef<Path>>(path: P) -> Result<Option<Identity>, Erro
 }
 
 pub fn encrypt_secret_key<P: AsRef<Path>>(path: P, passphrase: &str) -> Result<(), Error> {
-    let key = read_secret_key(&path)?.ok_or_else(|| Error::NoSecretKey)?;
-
+    let key = read_secret_key(&path)?;
     let encrypted = encrypt_with_passphrase(&key.to_string().expose_secret(), &passphrase)?;
 
     File::create(&path)?.write_all(&encrypted)?;
@@ -200,11 +205,11 @@ pub fn decrypt_with_passphrase(cypher: &[u8], passphrase: Option<&str>) -> Resul
     }
 }
 
-pub fn encrypt_with_keys(plaintext: &str, recipients: Vec<Recipient>) -> Result<Vec<u8>, Error> {
+pub fn encrypt_with_keys(plaintext: &str, recipients: &[Recipient]) -> Result<Vec<u8>, Error> {
     let encryptor = age::Encryptor::with_recipients(
         recipients
             .into_iter()
-            .map(|r| Box::new(r) as Box<dyn age::Recipient>)
+            .map(|r| Box::new(r.to_owned()) as Box<dyn age::Recipient>)
             .collect(),
     );
 
@@ -240,25 +245,24 @@ pub fn decrypt_with_key(cypher: &[u8], key: &Identity) -> Result<String, Error> 
     }
 }
 
-// pub fn encrypt_store(store: &PasswordStore, key: Box<dyn Identity>) -> Result<(), Error> {
-//     let items: Vec<DirEntry> = fs::read_dir(&store.dir)?
-//         .filter_map(|e| e.ok())
-//         .filter(|e| {
-//             e.file_name()
-//                 .to_str()
-//                 .map_or(false, |s| s.ends_with(".age"))
-//         })
-//         .collect();
+pub fn reencrypt_store(store: &PasswordStore, key: &Identity) -> Result<(), Error> {
+    let items: Vec<DirEntry> = fs::read_dir(&store.dir)?
+        .filter_map(|e| e.ok())
+        .filter(|e| {
+            e.file_name()
+                .to_str()
+                .map_or(false, |s| s.ends_with(".age"))
+        })
+        .collect();
 
-//     for item in items {
-//         let mut file = OpenOptions::new().write(true).open(item.path())?;
-//         let mut cypher = vec![];
-//         file.read_to_end(&mut cypher)?;
+    for item in items {
+        let mut cypher = vec![];
+        File::open(item.path())?.read_to_end(&mut cypher)?;
 
-//         let secret = decrypt(cypher, key)?;
-//         let cypher = encrypt(&secret, store.recipients)?;
-//         file.write_all(&cypher)?;
-//     }
+        let secret = decrypt_with_key(&cypher, key)?;
+        let encrypted = encrypt_with_keys(&secret, &store.recipients)?;
+        File::create(item.path())?.write_all(&encrypted)?;
+    }
 
-//     Ok(())
-// }
+    Ok(())
+}

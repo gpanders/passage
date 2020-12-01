@@ -1,25 +1,76 @@
+use age::x25519::{Identity, Recipient};
 use passage::{Error, PasswordStore};
-use std::fs;
+use secrecy::ExposeSecret;
+use std::fs::{self, File};
 use std::io::prelude::*;
 
-pub fn init(store: PasswordStore) -> Result<(), Error> {
+pub fn init(
+    mut store: PasswordStore,
+    recipients: Option<Vec<Recipient>>,
+    key_file: Option<String>,
+) -> Result<(), Error> {
     if !store.dir.exists() {
-        fs::create_dir_all(&store.dir).unwrap();
+        fs::create_dir_all(&store.dir)?;
     }
 
-    let key = age::x25519::Identity::generate();
-    passage::save_secret_key(&key, passage::secret_key_path(), false)?;
+    let (old_key, new_key) = match key_file {
+        Some(key_file) => {
+            let key = passage::read_secret_key(key_file)?;
+            match passage::read_secret_key(passage::secret_key_path()) {
+                Ok(existing_key) => {
+                    if existing_key.to_string().expose_secret() != key.to_string().expose_secret() {
+                        (Some(existing_key), key)
+                    } else {
+                        (None, existing_key)
+                    }
+                }
+                Err(Error::NoSecretKey) => (None, key),
+                Err(e) => return Err(e),
+            }
+        }
+        None => (
+            None,
+            match passage::read_secret_key(passage::secret_key_path()) {
+                Ok(key) => key,
+                Err(Error::NoSecretKey) => Identity::generate(),
+                Err(e) => return Err(e),
+            },
+        ),
+    };
 
-    let mut public_keys = fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(store.dir.join(".public-keys"))?;
+    store.recipients.push(new_key.to_public());
 
-    let pubkey = key.to_public();
-    writeln!(&mut public_keys, "{}", pubkey)?;
+    // Add additional recipients
+    if let Some(recipients) = recipients {
+        recipients
+            .into_iter()
+            .for_each(|r| store.recipients.push(r));
+    }
 
-    println!("Initialized store with new key:\n");
-    println!("    {}\n", pubkey);
+    // Remove any duplicate recipients
+    store.recipients.sort_unstable_by_key(|r| r.to_string());
+    store.recipients.dedup_by_key(|r| r.to_string());
+
+    if let Some(old_key) = &old_key {
+        // Remove old public key from recipients
+        let old_pubkey = old_key.to_public().to_string();
+        store.recipients.retain(|k| k.to_string() != old_pubkey);
+
+        // Re-encrypt store with the new public key
+        passage::reencrypt_store(&store, &old_key)?;
+    }
+
+    passage::save_secret_key(&new_key, passage::secret_key_path(), true)?;
+
+    let mut file = File::create(store.dir.join(".public-keys"))?;
+    for recipient in &store.recipients {
+        writeln!(file, "{}", recipient)?;
+    }
+
+    println!("Initialized store with the following recipients:\n");
+    for recipient in &store.recipients {
+        println!("    {}", recipient);
+    }
 
     Ok(())
 }
