@@ -1,5 +1,4 @@
 use passage::{Error, PasswordStore};
-use std::fs;
 use std::io;
 use std::io::prelude::*;
 
@@ -15,16 +14,7 @@ pub fn remove(store: PasswordStore, item: &str) -> Result<(), Error> {
         return Ok(());
     }
 
-    if let Err(e) = fs::remove_file(store.dir.join(item.to_string() + ".age")) {
-        match e.kind() {
-            io::ErrorKind::NotFound => {
-                eprintln!("{} does not exist in the password store.", item);
-                return Ok(());
-            }
-            _ => return Err(e.into()),
-        }
-    }
-
+    store.delete(item)?;
     println!("Removed item {}.", item);
     Ok(())
 }
