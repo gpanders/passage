@@ -28,10 +28,10 @@ fn main() {
             SubCommand::with_name("init")
                 .about("Initialize a password store with a new key")
                 .arg(
-                    Arg::with_name("recipients")
+                    Arg::with_name("recipient")
                         .help("Add an additional recipient to the password store")
                         .short("r")
-                        .long("recipients")
+                        .long("recipient")
                         .multiple(true)
                         .number_of_values(1)
                         .takes_value(true),
@@ -93,7 +93,7 @@ fn main() {
         ("edit", Some(sub)) => cmd::edit(store, sub.value_of("item").unwrap()),
         ("init", Some(sub)) => {
             let recipients = sub
-                .values_of("recipients")
+                .values_of("recipient")
                 .map(|v| v.map(|s| s.parse()).filter_map(|r| r.ok()).collect());
             cmd::init(store, recipients, sub.value_of("key").map(|s| s.to_owned()))
         }
