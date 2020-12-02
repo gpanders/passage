@@ -60,7 +60,7 @@ mod tests {
         save_secret_key(&key, &path, true)?;
 
         let key = read_secret_key(&path)?;
-        let decrypted = decrypt_with_key(&encrypted, &key.unwrap())?;
+        let decrypted = decrypt_with_key(&encrypted, &key)?;
 
         assert_eq!(decrypted, plaintext);
 
