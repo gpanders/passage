@@ -1,0 +1,22 @@
+image: debian/testing
+packages:
+    - cargo
+    - python3
+    - libxcb-xfixes0-dev
+sources:
+    - https://git.sr.ht/~gpanders/passage
+secrets:
+    - 78f39fb6-1185-492f-9c21-f755e10b5e5d
+environment:
+    GIT_SSH_COMMAND: ssh -o StrictHostKeyChecking=no
+triggers:
+    - action: email
+      condition: failure
+      to: Gregory Anders <greg@gpanders.com>
+tasks:
+    - test: |
+        cd passage
+        cargo test
+    - mirror: |
+        cd passage
+        git push --force --mirror git@github.com:gpanders/passage
