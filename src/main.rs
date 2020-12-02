@@ -82,6 +82,7 @@ fn main() {
             SubCommand::with_name("unlock")
                 .about("Unlock the password store by decrypting the secret key"),
         )
+        .subcommand(SubCommand::with_name("pubkey").about("Display password store public key"))
         .get_matches();
 
     let result = match matches.subcommand() {
@@ -99,6 +100,7 @@ fn main() {
         ("list", Some(_)) => cmd::list(store),
         ("lock", Some(_)) => cmd::lock(),
         ("unlock", Some(_)) => cmd::unlock(),
+        ("pubkey", Some(_)) => cmd::pubkey(),
         ("insert", Some(sub)) => cmd::insert(store, sub.value_of("item").unwrap()),
         ("remove", Some(sub)) => cmd::remove(store, sub.value_of("item").unwrap()),
         ("", None) => match matches.value_of("item") {
