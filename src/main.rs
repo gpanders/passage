@@ -20,6 +20,11 @@ fn main() {
         )
         .arg(Arg::with_name("item").value_name("NAME"))
         .subcommand(
+            SubCommand::with_name("edit")
+                .about("Edit an existing item in the password store")
+                .arg(Arg::with_name("item").value_name("NAME").required(true)),
+        )
+        .subcommand(
             SubCommand::with_name("init")
                 .about("Initialize a password store with a new key")
                 .arg(
@@ -84,6 +89,7 @@ fn main() {
             Some(item) => cmd::show(store, item, sub.is_present("clip")),
             None => cmd::list(store),
         },
+        ("edit", Some(sub)) => cmd::edit(store, sub.value_of("item").unwrap()),
         ("init", Some(sub)) => {
             let recipients = sub
                 .values_of("recipients")
