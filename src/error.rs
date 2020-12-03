@@ -11,7 +11,6 @@ pub enum Error {
     SecretKeyExists,
     KeyNotEncrypted,
     PasswordsDoNotMatch,
-    PassphraseTimedOut,
     Other(String),
 }
 
@@ -31,7 +30,6 @@ impl fmt::Display for Error {
             }
             Error::KeyNotEncrypted => write!(f, "Password store is not encrypted."),
             Error::PasswordsDoNotMatch => write!(f, "Passwords do not match."),
-            Error::PassphraseTimedOut => write!(f, "Passphrase entry timed out."),
             Error::Other(msg) => write!(f, "{}", msg),
         }
     }

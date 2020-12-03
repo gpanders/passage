@@ -1,8 +1,13 @@
-mod cmd;
-
 use clap::{App, AppSettings, Arg, SubCommand};
-use passage::PasswordStore;
 use std::process;
+
+mod cmd;
+mod crypt;
+mod error;
+mod key;
+mod store;
+
+use store::PasswordStore;
 
 fn main() {
     let store = PasswordStore::new(dirs::home_dir().unwrap().join(".passage"));

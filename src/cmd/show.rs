@@ -1,6 +1,5 @@
+use crate::{error::Error, store::PasswordStore};
 use clipboard::{ClipboardContext, ClipboardProvider};
-use passage::Error;
-use passage::PasswordStore;
 
 pub fn show(store: PasswordStore, item: &str, copy_to_clipboard: bool) -> Result<(), Error> {
     let secret = store.get(item)?;

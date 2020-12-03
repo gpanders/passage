@@ -1,5 +1,5 @@
+use crate::{error::Error, key, store::PasswordStore};
 use age::x25519::{Identity, Recipient};
-use passage::{Error, PasswordStore};
 use secrecy::ExposeSecret;
 use std::fs::{self, File};
 use std::io::prelude::*;
@@ -15,8 +15,8 @@ pub fn init(
 
     let (old_key, new_key) = match key_file {
         Some(key_file) => {
-            let key = passage::read_secret_key(key_file)?;
-            match passage::read_secret_key(passage::secret_key_path()) {
+            let key = key::read_secret_key(key_file)?;
+            match key::read_secret_key(crate::key::secret_key_path()) {
                 Ok(existing_key) => {
                     if existing_key.to_string().expose_secret() != key.to_string().expose_secret() {
                         (Some(existing_key), key)
@@ -30,7 +30,7 @@ pub fn init(
         }
         None => (
             None,
-            match passage::read_secret_key(passage::secret_key_path()) {
+            match key::read_secret_key(key::secret_key_path()) {
                 Ok(key) => key,
                 Err(Error::NoSecretKey) => Identity::generate(),
                 Err(e) => return Err(e),
@@ -57,10 +57,10 @@ pub fn init(
         store.recipients.retain(|k| k.to_string() != old_pubkey);
 
         // Re-encrypt store with the new public key
-        passage::reencrypt_store(&store, &old_key)?;
+        store.reencrypt(&old_key)?;
     }
 
-    passage::save_secret_key(&new_key, passage::secret_key_path(), true)?;
+    key::save_secret_key(&new_key, key::secret_key_path(), true)?;
 
     let mut file = File::create(store.dir.join(".public-keys"))?;
     for recipient in &store.recipients {

@@ -1,5 +1,5 @@
+use crate::{error::Error, store::PasswordStore};
 use colored::*;
-use passage::{Error, PasswordStore};
 use std::fs::{self, DirEntry};
 use std::io;
 use std::path::Path;

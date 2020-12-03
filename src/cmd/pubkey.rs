@@ -1,7 +1,7 @@
-use passage::Error;
+use crate::{error::Error, key};
 
 pub fn pubkey() -> Result<(), Error> {
-    let key = passage::read_secret_key(passage::secret_key_path())?;
+    let key = key::read_secret_key(key::secret_key_path())?;
     println!("{}", key.to_public());
     Ok(())
 }

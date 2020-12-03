@@ -1,7 +1,7 @@
-use passage::{Error, PasswordStore};
+use crate::{crypt, error::Error, store::PasswordStore};
 
 pub fn insert(store: PasswordStore, item: &str) -> Result<(), Error> {
-    let password = passage::read_secret(
+    let password = crypt::read_secret(
         &format!("Enter password for {}", item),
         Some(&format!("Retype password for {}", item)),
     )?;

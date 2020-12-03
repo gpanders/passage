@@ -1,4 +1,4 @@
-use passage::{Error, PasswordStore};
+use crate::{error::Error, store::PasswordStore};
 use std::io;
 use std::io::prelude::*;
 

@@ -1,10 +1,10 @@
-use age::x25519::Recipient;
-use std::fs::{self, File, OpenOptions};
+use age::x25519::{Identity, Recipient};
+use std::fs::{self, DirEntry, File, OpenOptions};
 use std::io::prelude::*;
 use std::io::{self, BufReader};
 use std::path::PathBuf;
 
-use crate::error::Error;
+use crate::{crypt, error::Error, key};
 
 pub struct PasswordStore {
     pub dir: PathBuf,
@@ -39,7 +39,7 @@ impl PasswordStore {
             },
         };
 
-        let encrypted = crate::encrypt_with_keys(&secret, &self.recipients)?;
+        let encrypted = crypt::encrypt_with_keys(&secret, &self.recipients)?;
         file.write_all(&encrypted)?;
 
         Ok(())
@@ -51,8 +51,8 @@ impl PasswordStore {
             return Err(Error::ItemNotFound(name.into()));
         }
 
-        let key = crate::read_secret_key(crate::secret_key_path())?;
-        let decrypted = crate::decrypt_with_key(&fs::read(path)?, &key)?;
+        let key = key::read_secret_key(key::secret_key_path())?;
+        let decrypted = crypt::decrypt_with_key(&fs::read(path)?, &key)?;
 
         Ok(decrypted)
     }
@@ -63,7 +63,7 @@ impl PasswordStore {
             return Err(Error::ItemNotFound(name.into()));
         }
 
-        let encrypted = crate::encrypt_with_keys(&secret, &self.recipients)?;
+        let encrypted = crypt::encrypt_with_keys(&secret, &self.recipients)?;
         File::create(path)?.write_all(&encrypted)?;
 
         Ok(())
@@ -75,6 +75,28 @@ impl PasswordStore {
                 io::ErrorKind::NotFound => return Err(Error::ItemNotFound(name.into())),
                 _ => return Err(e.into()),
             }
+        }
+
+        Ok(())
+    }
+
+    pub fn reencrypt(&self, key: &Identity) -> Result<(), Error> {
+        let items: Vec<DirEntry> = fs::read_dir(&self.dir)?
+            .filter_map(|e| e.ok())
+            .filter(|e| {
+                e.file_name()
+                    .to_str()
+                    .map_or(false, |s| s.ends_with(".age"))
+            })
+            .collect();
+
+        for item in items {
+            let mut cypher = vec![];
+            File::open(item.path())?.read_to_end(&mut cypher)?;
+
+            let secret = crypt::decrypt_with_key(&cypher, key)?;
+            let encrypted = crypt::encrypt_with_keys(&secret, &self.recipients)?;
+            File::create(item.path())?.write_all(&encrypted)?;
         }
 
         Ok(())
