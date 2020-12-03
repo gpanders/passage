@@ -1,0 +1,90 @@
+passage(1)
+==========
+
+NAME
+----
+
+passage - password store built on the age encryption protocol
+
+SYNOPSIS
+--------
+
+*passage* [_COMMAND_] [_OPTIONS_] [_ARGS_]
+
+DESCRIPTION
+-----------
+
+*passage* is a password store modeled after *pass*(1) that emphasizes speed and
+eschews the use of PGP in favor of the age encryption protocol.
+
+*passage* keeps your encrypted passwords under _$HOME/.passage_ and offers a
+series of subcommands to add, remove, and display these passwords.
+
+If no _COMMAND_ is specified, _COMMAND_ defaults to _show_ or _ls_, depending
+on if any _ARGS_ are present. Otherwise, _COMMAND_ must be one of the commands
+listed below.
+
+COMMANDS
+--------
+
+*init* [_--recipient=recipient_, _-r recipient_]... [_--key=key-file_, _-k key-file_]::
+
+Initialize a new password store, or reinitialize a store with the given
+options. With no options, *passage* creates a new secret key if one does not
+already exist at _$XDG_DATA_HOME/passage/key.txt_. The public key is written to
+_$HOME/.passage/.public-keys_ along with any other public keys specified using
+_--recipient_ or _-r_.
++
+If an age secret key already exists at _key.txt_, *passage* can use the
+existing key instead of generating a new one by using the _--key_ or _-k_
+option. If _--key_ or _-k_ is used with *init* and a secret key already exists,
+the password store will be reencrypted using the given key.
+
+*ls*::
+
+List the contents of the password store. This command is alternatively named
+*list*.
+
+*show* [_--clip_, _-c_] [_name_]::
+
+With no arguments, display the contents of the password store (identical
+to *ls*). Otherwise, decrypt and display the password for _name_ to
+standard output.
++
+With _--clip_ or _-c_, copy the decrypted password for _name_ to the
+system clipboard instead of displaying it.
+
+*insert* _name_::
+
+Insert a new password into the store for _name_. The user is prompted to
+enter a password on standard input. This command is alternatively named
+*add*.
+
+*rm* _name_::
+
+Remove a password from the store. This command is alternatively named
+*remove*.
+
+*edit* _name_::
+
+Modify an existing item in the password store. The user is prompted to
+enter a password on standard input.
+
+*pubkey*::
+
+Display the public key for the password store's secret key.
+
+SEE ALSO
+--------
+
+*pass*(1)
+
+BUGS AND CONTRIBUTING
+---------------------
+
+Send patches and bug reports to ~gpanders/passage@lists.sr.ht.
+
+AUTHOR
+------
+
+Gregory Anders <greg@gpanders.com>

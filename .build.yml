@@ -16,7 +16,7 @@ triggers:
 tasks:
     - test: |
         cd passage
-        cargo test
+        make test
     - mirror: |
         cd passage
         git push --force --mirror git@github.com:gpanders/passage
