@@ -18,10 +18,11 @@ impl PasswordStore {
         if let Ok(file) = File::open(dir.join(".public-keys")) {
             let buf = BufReader::new(file);
             buf.lines()
-                .filter_map(|e| e.ok())
-                .map(|e| e.parse())
-                .filter_map(|e| e.ok())
-                .for_each(|e| recipients.push(e));
+                .filter_map(|result| result.ok())
+                .filter(|line| !line.starts_with('#'))
+                .map(|line| line.parse())
+                .filter_map(|result| result.ok())
+                .for_each(|recipient| recipients.push(recipient));
         }
 
         PasswordStore { dir, recipients }
