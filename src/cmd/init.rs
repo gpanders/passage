@@ -13,32 +13,25 @@ pub fn init(
         fs::create_dir_all(&store.dir)?;
     }
 
-    let (old_key, new_key) = match key_file {
+    let (existing_key, new_key) = match key_file {
         Some(key_file) => {
-            let key = key::read_secret_key(key_file)?;
+            let new_key = key::read_secret_key(key_file)?;
             match key::read_secret_key(crate::key::secret_key_path()) {
-                Ok(existing_key) => {
-                    if existing_key.to_string().expose_secret() != key.to_string().expose_secret() {
-                        (Some(existing_key), key)
-                    } else {
-                        (None, existing_key)
-                    }
-                }
-                Err(Error::NoSecretKey) => (None, key),
+                Ok(existing_key) => (Some(existing_key), Some(new_key)),
+                Err(Error::NoSecretKey) => (None, Some(new_key)),
                 Err(e) => return Err(e),
             }
         }
-        None => (
-            None,
-            match key::read_secret_key(key::secret_key_path()) {
-                Ok(key) => key,
-                Err(Error::NoSecretKey) => Identity::generate(),
-                Err(e) => return Err(e),
-            },
-        ),
+        None => match key::read_secret_key(key::secret_key_path()) {
+            Ok(existing_key) => (Some(existing_key), None),
+            Err(Error::NoSecretKey) => (None, Some(Identity::generate())),
+            Err(e) => return Err(e),
+        },
     };
 
-    store.recipients.push(new_key.to_public());
+    if let Some(new_key) = &new_key {
+        store.recipients.push(new_key.to_public());
+    }
 
     // Add additional recipients
     if let Some(recipients) = recipients {
@@ -51,16 +44,21 @@ pub fn init(
     store.recipients.sort_unstable_by_key(|r| r.to_string());
     store.recipients.dedup_by_key(|r| r.to_string());
 
-    if let Some(old_key) = &old_key {
-        // Remove old public key from recipients
-        let old_pubkey = old_key.to_public().to_string();
-        store.recipients.retain(|k| k.to_string() != old_pubkey);
+    if let (Some(existing_key), Some(new_key)) = (&existing_key, &new_key) {
+        if existing_key.to_string().expose_secret() != new_key.to_string().expose_secret() {
+            // Remove old public key from recipients
+            let pubkey = existing_key.to_public().to_string();
+            store.recipients.retain(|k| k.to_string() != pubkey);
+        }
+    };
 
-        // Re-encrypt store with the new public key
-        store.reencrypt(&old_key)?;
+    if let Some(existing_key) = &existing_key {
+        store.reencrypt(&existing_key)?;
     }
 
-    key::save_secret_key(&new_key, key::secret_key_path(), true)?;
+    if let Some(new_key) = &new_key {
+        key::save_secret_key(new_key, key::secret_key_path(), true)?;
+    }
 
     let mut file = File::create(store.dir.join(".public-keys"))?;
     for recipient in &store.recipients {
