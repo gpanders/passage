@@ -1,4 +1,6 @@
 use clap::{App, AppSettings, Arg, SubCommand};
+use std::env;
+use std::path::PathBuf;
 use std::process;
 
 mod cmd;
@@ -10,7 +12,10 @@ mod store;
 use store::PasswordStore;
 
 fn main() {
-    let store = PasswordStore::new(dirs::home_dir().unwrap().join(".passage"));
+    let dir = env::var("PASSAGE_STORE_DIR")
+        .map(|s| PathBuf::from(s))
+        .unwrap_or(dirs::home_dir().unwrap().join(".passage"));
+    let store = PasswordStore::new(dir);
 
     let matches = App::new(clap::crate_name!())
         .version(clap::crate_version!())

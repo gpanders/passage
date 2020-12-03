@@ -17,8 +17,9 @@ DESCRIPTION
 *passage* is a password store modeled after *pass*(1) that emphasizes speed and
 eschews the use of PGP in favor of the age encryption protocol.
 
-*passage* keeps your encrypted passwords under _$HOME/.passage_ and offers a
-series of subcommands to add, remove, and display these passwords.
+*passage* keeps your encrypted passwords under _$HOME/.passage_ (or the value
+of _PASSAGE_STORE_DIR_) and offers a series of subcommands to add, remove, and
+display these passwords.
 
 If no _COMMAND_ is specified, _COMMAND_ defaults to _show_ or _ls_, depending
 on if any _ARGS_ are present. Otherwise, _COMMAND_ must be one of the commands
@@ -32,8 +33,8 @@ COMMANDS
 Initialize a new password store, or reinitialize a store with the given
 options. With no options, *passage* creates a new secret key if one does not
 already exist at _$XDG_DATA_HOME/passage/key.txt_. The public key is written to
-_$HOME/.passage/.public-keys_ along with any other public keys specified using
-_--recipient_ or _-r_.
+_.public-keys_ in the password store, along with any other public keys
+specified using _--recipient_ or _-r_.
 +
 If an age secret key already exists at _key.txt_, *passage* can use the
 existing key instead of generating a new one by using the _--key_ or _-k_
@@ -73,6 +74,13 @@ enter a password on standard input.
 *pubkey*::
 
 Display the public key for the password store's secret key.
+
+ENVIRONMENT VARIABLES
+---------------------
+
+_PASSAGE_STORE_DIR_::
+
+Overrides the default password store directory.
 
 SEE ALSO
 --------

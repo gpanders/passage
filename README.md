@@ -68,6 +68,9 @@ prefix, set the `prefix` variable in the `make` command, e.g.:
 
 and continue to use `pass` as normal.
 
+The default directory for the password store is `$HOME/.passage`. This can be
+changed by setting the `PASSAGE_STORE_DIR` environment variable.
+
 ### Initialization
 
 Initialize a new password store using
