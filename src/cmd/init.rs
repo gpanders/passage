@@ -68,9 +68,9 @@ pub fn init(
         writeln!(file, "{}", recipient)?;
     }
 
-    println!("Initialized store with the following recipients:\n");
+    eprintln!("Initialized store with the following recipients:\n");
     for recipient in &store.recipients {
-        println!("    {}", recipient);
+        eprintln!("    {}", recipient);
     }
 
     Ok(())

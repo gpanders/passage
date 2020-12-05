@@ -20,6 +20,6 @@ pub fn edit(store: PasswordStore, item: Option<&str>) -> Result<(), Error> {
     )?;
 
     store.update(&item, &password)?;
-    println!("Updated entry in the password store for {}.", item);
+    eprintln!("Updated entry in the password store for {}.", item);
     Ok(())
 }

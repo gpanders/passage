@@ -14,6 +14,6 @@ pub fn insert(store: PasswordStore, item: Option<&str>) -> Result<(), Error> {
     )?;
 
     store.insert(&item, &password)?;
-    println!("Created new entry in the password store for {}.", item);
+    eprintln!("Created new entry in the password store for {}.", item);
     Ok(())
 }

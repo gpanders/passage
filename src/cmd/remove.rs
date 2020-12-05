@@ -20,6 +20,6 @@ pub fn remove(store: PasswordStore, item: Option<&str>) -> Result<(), Error> {
     }
 
     store.delete(&item)?;
-    println!("Removed item {}.", item);
+    eprintln!("Removed item {}.", item);
     Ok(())
 }
