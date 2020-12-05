@@ -140,7 +140,9 @@ This command is alternatively called 'list'.
                 .long_about(
                     "
 Create a new item in the password store with the given name. If no argument is given, the user is
-prompted for the name of the item to create.
+prompted for the name of the item to create. If the item already exists in the password store, the
+user is prompted to confirm that they wish to overwrite the existing item. To bypass confirmation,
+use the -f/--force flag.
 
 The user is then prompted to enter the password for the new item and then asked again to confirm
 the password.
@@ -148,7 +150,14 @@ the password.
 This command is alternatively called 'add'.
 ",
                 )
-                .arg(Arg::with_name("item").value_name("NAME")),
+                .arg(Arg::with_name("item").value_name("NAME"))
+                .arg(
+                    Arg::with_name("force")
+                        .help("Don't ask before overwriting an existing item")
+                        .short("f")
+                        .long("force")
+                        .requires("item"),
+                ),
         )
         .subcommand(
             SubCommand::with_name("rm")
@@ -170,7 +179,8 @@ This command is alternatively called 'remove'.
                     Arg::with_name("force")
                         .help("Don't ask for confirmation")
                         .short("f")
-                        .long("force"),
+                        .long("force")
+                        .requires("item"),
                 ),
         )
         .subcommand(
@@ -217,7 +227,7 @@ Unlock the password store by decrypting the secret key.
         ("lock", Some(_)) => cmd::lock(),
         ("unlock", Some(_)) => cmd::unlock(),
         ("pubkey", Some(_)) => cmd::pubkey(),
-        ("insert", Some(sub)) => cmd::insert(store, sub.value_of("item")),
+        ("insert", Some(sub)) => cmd::insert(store, sub.value_of("item"), sub.is_present("force")),
         ("rm", Some(sub)) => cmd::remove(store, sub.value_of("item"), sub.is_present("force")),
         ("", None) => match matches.value_of("item") {
             Some(item) => cmd::show(store, item, matches.is_present("clip")),
