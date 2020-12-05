@@ -75,7 +75,7 @@ pub fn decrypt_with_passphrase(cypher: &[u8], passphrase: Option<&str>) -> Resul
 pub fn encrypt_with_keys(plaintext: &str, recipients: &[Recipient]) -> Result<Vec<u8>, Error> {
     let encryptor = age::Encryptor::with_recipients(
         recipients
-            .into_iter()
+            .iter()
             .map(|r| Box::new(r.to_owned()) as Box<dyn age::Recipient>)
             .collect(),
     );

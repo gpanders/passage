@@ -14,8 +14,8 @@ use store::PasswordStore;
 
 fn main() {
     let dir = env::var("PASSAGE_STORE_DIR")
-        .map(|s| PathBuf::from(s))
-        .unwrap_or(dirs::home_dir().unwrap().join(".passage"));
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| dirs::home_dir().unwrap().join(".passage"));
     let store = PasswordStore::new(dir);
 
     let matches = App::new(clap::crate_name!())
