@@ -1,8 +1,11 @@
-use crate::{error::Error, key, store::PasswordStore};
 use age::x25519::{Identity, Recipient};
 use secrecy::ExposeSecret;
 use std::fs::{self, File};
 use std::io::prelude::*;
+
+use crate::error::Error;
+use crate::key;
+use crate::store::PasswordStore;
 
 pub fn init(
     mut store: PasswordStore,

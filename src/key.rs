@@ -1,4 +1,3 @@
-use crate::{crypt, error::Error};
 use age::{x25519::Identity, IdentityFile};
 use secrecy::ExposeSecret;
 use std::fs::{self, File, OpenOptions};
@@ -8,6 +7,10 @@ use std::path::{Path, PathBuf};
 
 #[cfg(unix)]
 use std::os::unix::fs::OpenOptionsExt;
+
+use crate::crypt;
+use crate::error::Error;
+use crate::input;
 
 #[cfg(test)]
 mod tests {
@@ -84,7 +87,7 @@ pub fn read_secret_key<P: AsRef<Path>>(path: P) -> Result<Identity, Error> {
             let mut bytes = vec![];
             File::open(path)?.read_to_end(&mut bytes)?;
 
-            let passphrase = crypt::read_secret("Passphrase for secret key", None)?;
+            let passphrase = input::read_secret("Passphrase for secret key", None)?;
             let decrypted = crypt::decrypt_with_passphrase(&bytes, Some(&passphrase))?;
             match IdentityFile::from_buffer(decrypted.as_bytes()) {
                 Ok(identity_file) => identity_file

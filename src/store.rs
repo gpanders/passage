@@ -28,6 +28,12 @@ impl PasswordStore {
         PasswordStore { dir, recipients }
     }
 
+    pub fn exists(&self, name: &str) -> bool {
+        self.dir
+            .join(PathBuf::from(name.to_string() + ".age"))
+            .exists()
+    }
+
     pub fn insert(&self, name: &str, secret: &str) -> Result<(), Error> {
         let path = self.dir.join(PathBuf::from(name.to_string() + ".age"));
         fs::create_dir_all(&path.parent().unwrap())?;

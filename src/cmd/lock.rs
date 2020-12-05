@@ -1,7 +1,9 @@
-use crate::{crypt, error::Error, key};
+use crate::error::Error;
+use crate::input;
+use crate::key;
 
 pub fn lock() -> Result<(), Error> {
-    let passphrase = crypt::read_secret("Enter passphrase", Some("Confirm passphrase"))?;
+    let passphrase = input::read_secret("Enter passphrase", Some("Confirm passphrase"))?;
     key::encrypt_secret_key(key::secret_key_path(), &passphrase)?;
 
     println!("Password store locked.");

@@ -6,6 +6,7 @@ use std::process;
 mod cmd;
 mod crypt;
 mod error;
+mod input;
 mod key;
 mod store;
 
@@ -76,13 +77,13 @@ fn main() {
             SubCommand::with_name("insert")
                 .about("Insert a new item into the password store")
                 .alias("add")
-                .arg(Arg::with_name("item").value_name("NAME").required(true)),
+                .arg(Arg::with_name("item").value_name("NAME")),
         )
         .subcommand(
             SubCommand::with_name("remove")
                 .about("Remove an item from the password store")
                 .alias("rm")
-                .arg(Arg::with_name("item").value_name("NAME").required(true)),
+                .arg(Arg::with_name("item").value_name("NAME")),
         )
         .subcommand(
             SubCommand::with_name("lock")
@@ -100,7 +101,7 @@ fn main() {
             Some(item) => cmd::show(store, item, sub.is_present("clip")),
             None => cmd::list(store),
         },
-        ("edit", Some(sub)) => cmd::edit(store, sub.value_of("item").unwrap()),
+        ("edit", Some(sub)) => cmd::edit(store, sub.value_of("item")),
         ("init", Some(sub)) => {
             let recipients = sub
                 .values_of("recipient")
@@ -111,8 +112,8 @@ fn main() {
         ("lock", Some(_)) => cmd::lock(),
         ("unlock", Some(_)) => cmd::unlock(),
         ("pubkey", Some(_)) => cmd::pubkey(),
-        ("insert", Some(sub)) => cmd::insert(store, sub.value_of("item").unwrap()),
-        ("remove", Some(sub)) => cmd::remove(store, sub.value_of("item").unwrap()),
+        ("insert", Some(sub)) => cmd::insert(store, sub.value_of("item")),
+        ("remove", Some(sub)) => cmd::remove(store, sub.value_of("item")),
         ("", None) => match matches.value_of("item") {
             Some(item) => cmd::show(store, item, matches.is_present("clip")),
             None => cmd::list(store),

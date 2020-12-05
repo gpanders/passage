@@ -4,6 +4,7 @@ use std::io::prelude::*;
 use std::iter;
 
 use crate::error::Error;
+use crate::input;
 
 #[cfg(test)]
 mod tests {
@@ -37,21 +38,6 @@ mod tests {
     }
 }
 
-pub fn read_secret(prompt: &str, confirm: Option<&str>) -> Result<String, Error> {
-    let input = rpassword::prompt_password_stdout(&format!("{}: ", prompt))?;
-
-    match confirm {
-        Some(prompt) => {
-            if rpassword::prompt_password_stdout(&format!("{}: ", prompt))? != input {
-                Err(Error::PasswordsDoNotMatch)
-            } else {
-                Ok(input)
-            }
-        }
-        None => Ok(input),
-    }
-}
-
 pub fn encrypt_with_passphrase(plaintext: &str, passphrase: &str) -> Result<Vec<u8>, Error> {
     let encryptor = age::Encryptor::with_user_passphrase(Secret::new(passphrase.to_owned()));
     let mut encrypted = vec![];
@@ -73,7 +59,7 @@ pub fn decrypt_with_passphrase(cypher: &[u8], passphrase: Option<&str>) -> Resul
 
     let passphrase = match passphrase {
         Some(s) => s.to_owned(),
-        None => read_secret("Passphrase", None)?,
+        None => input::read_secret("Passphrase", None)?,
     };
 
     let mut decrypted = vec![];

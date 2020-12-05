@@ -1,8 +1,10 @@
-use crate::{error::Error, store::PasswordStore};
 use colored::*;
 use std::fs::{self, DirEntry};
 use std::io;
 use std::path::Path;
+
+use crate::error::Error;
+use crate::store::PasswordStore;
 
 fn is_hidden(entry: &DirEntry) -> bool {
     entry
