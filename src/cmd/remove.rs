@@ -22,6 +22,6 @@ pub fn remove(store: PasswordStore, item: Option<&str>, force: bool) -> Result<(
     }
 
     store.delete(&item)?;
-    eprintln!("Removed item {}.", item);
+    eprintln!("Removed {} from the password store.", item);
     Ok(())
 }
