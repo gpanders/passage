@@ -122,19 +122,20 @@ copy the password to the system clipboard instead.
                 ),
         )
         .subcommand(
-            SubCommand::with_name("list")
-                .alias("ls")
+            SubCommand::with_name("ls")
+                .alias("list")
                 .about("Display the contents of your password store")
                 .long_about(
                     "
 Displays the directory tree of the password store.
 
-This command is alternatively called 'ls'.
+This command is alternatively called 'list'.
 ",
                 ),
         )
         .subcommand(
             SubCommand::with_name("insert")
+                .alias("add")
                 .about("Insert a new item into the password store")
                 .long_about(
                     "
@@ -147,13 +148,12 @@ the password.
 This command is alternatively called 'add'.
 ",
                 )
-                .alias("add")
                 .arg(Arg::with_name("item").value_name("NAME")),
         )
         .subcommand(
-            SubCommand::with_name("remove")
+            SubCommand::with_name("rm")
+                .alias("remove")
                 .about("Remove an item from the password store")
-                .alias("rm")
                 .long_about(
                     "
 Remove the given item from the password store, if it exists. If no argument is given, the user is
@@ -162,7 +162,7 @@ prompted for the name of the item to remove.
 The user is prompted to confirm that they wish to remove the given item. To bypass confirmation,
 use the -f/--force flag.
 
-This command is alternatively called 'rm'.
+This command is alternatively called 'remove'.
 ",
                 )
                 .arg(Arg::with_name("item").value_name("NAME"))
@@ -213,12 +213,12 @@ Unlock the password store by decrypting the secret key.
                 .map(|v| v.map(|s| s.parse()).filter_map(|r| r.ok()).collect());
             cmd::init(store, recipients, sub.value_of("key").map(|s| s.to_owned()))
         }
-        ("list", Some(_)) => cmd::list(store),
+        ("ls", Some(_)) => cmd::list(store),
         ("lock", Some(_)) => cmd::lock(),
         ("unlock", Some(_)) => cmd::unlock(),
         ("pubkey", Some(_)) => cmd::pubkey(),
         ("insert", Some(sub)) => cmd::insert(store, sub.value_of("item")),
-        ("remove", Some(sub)) => cmd::remove(store, sub.value_of("item"), sub.is_present("force")),
+        ("rm", Some(sub)) => cmd::remove(store, sub.value_of("item"), sub.is_present("force")),
         ("", None) => match matches.value_of("item") {
             Some(item) => cmd::show(store, item, matches.is_present("clip")),
             None => cmd::list(store),
