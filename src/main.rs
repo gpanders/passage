@@ -154,7 +154,6 @@ This command is alternatively called 'add'.
             SubCommand::with_name("remove")
                 .about("Remove an item from the password store")
                 .alias("rm")
-                .arg(Arg::with_name("item").value_name("NAME"))
                 .long_about(
                     "
 Remove the given item from the password store, if it exists. If no argument is given, the user is
@@ -165,6 +164,13 @@ use the -f/--force flag.
 
 This command is alternatively called 'rm'.
 ",
+                )
+                .arg(Arg::with_name("item").value_name("NAME"))
+                .arg(
+                    Arg::with_name("force")
+                        .help("Don't ask for confirmation")
+                        .short("f")
+                        .long("force"),
                 ),
         )
         .subcommand(
@@ -212,7 +218,7 @@ Unlock the password store by decrypting the secret key.
         ("unlock", Some(_)) => cmd::unlock(),
         ("pubkey", Some(_)) => cmd::pubkey(),
         ("insert", Some(sub)) => cmd::insert(store, sub.value_of("item")),
-        ("remove", Some(sub)) => cmd::remove(store, sub.value_of("item")),
+        ("remove", Some(sub)) => cmd::remove(store, sub.value_of("item"), sub.is_present("force")),
         ("", None) => match matches.value_of("item") {
             Some(item) => cmd::show(store, item, matches.is_present("clip")),
             None => cmd::list(store),
