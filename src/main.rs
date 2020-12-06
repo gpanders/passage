@@ -22,6 +22,19 @@ fn main() {
         .version(clap::crate_version!())
         .setting(AppSettings::ArgsNegateSubcommands)
         .setting(AppSettings::VersionlessSubcommands)
+        .about("Password store built on the age encryption library")
+        .long_about(
+            "
+passage is a UNIX-style password management tool that allows you to combine password and secrets
+management with other programs.
+
+To get started, run 'passage init' to initialize your password store and generate a secret key.
+Then use 'passage insert ITEM' and 'passage show ITEM' to insert and retrieve passwords from your
+store.
+
+Use 'passage help <SUBCOMMAND>' for more information on how to use each subcommand.
+",
+        )
         .arg(
             Arg::with_name("clip")
                 .short("c")
@@ -29,7 +42,11 @@ fn main() {
                 .requires("item")
                 .hidden(true),
         )
-        .arg(Arg::with_name("item").value_name("NAME"))
+        .arg(
+            Arg::with_name("item")
+                .help("Display password for NAME")
+                .value_name("NAME"),
+        )
         .subcommand(
             SubCommand::with_name("edit")
                 .about("Edit an existing item in the password store")
@@ -37,7 +54,35 @@ fn main() {
         )
         .subcommand(
             SubCommand::with_name("init")
-                .about("Initialize a password store with a new key")
+                .about("Initialize a password store")
+                .long_about(
+                    "
+If a password store does not already exist, and the -k/--key flag is not provided, a new secret key
+will be auto-generated.
+
+With -k/--key, the provided secret key is used for the password store instead. If a secret key
+already exists, the store is reencrypted to use the new key.
+
+The public key corresponding to your store's secret key is automatically added to the recipients
+list in your store. You can add additional recipients to your store using the -r/--recipient flag.
+The argument to this flag should be an age public key.
+
+Examples:
+
+Initialize a new store:
+
+    $ passage init
+
+Initialize a new store or reinitialize an existing store using an existing key:
+
+    $ age-keygen -o key.txt
+    $ passage init -k key.txt
+
+Add other recipients to your store:
+
+    $ passage init -r age1294r5jdje2n2jprxj0avqyvmpsujzlmjt5kla728x5eykgd8cc9skkms53
+",
+                )
                 .arg(
                     Arg::with_name("recipient")
                         .help("Add an additional recipient to the password store")
@@ -57,7 +102,16 @@ fn main() {
         )
         .subcommand(
             SubCommand::with_name("show")
-                .about("Decrypt and print a password")
+                .about("Retrieve a password from the store")
+                .long_about(
+                    "
+With no arguments, 'passage show' is equivalent to 'passage ls' or just 'passage'; namely, it lists
+the contents of the store.
+
+With an argument, decrypt and display the given item from the store, if it exists. With -c/--clip,
+copy the password to the system clipboard instead.
+",
+                )
                 .arg(Arg::with_name("item").value_name("NAME"))
                 .arg(
                     Arg::with_name("clip")
@@ -69,13 +123,30 @@ fn main() {
         )
         .subcommand(
             SubCommand::with_name("list")
-                .about("List passwords")
                 .alias("ls")
-                .arg(Arg::with_name("subfolder")),
+                .about("Display the contents of your password store")
+                .long_about(
+                    "
+Displays the directory tree of the password store.
+
+This command is alternatively called 'ls'.
+",
+                ),
         )
         .subcommand(
             SubCommand::with_name("insert")
                 .about("Insert a new item into the password store")
+                .long_about(
+                    "
+Create a new item in the password store with the given name. If no argument is given, the user is
+prompted for the name of the item to create.
+
+The user is then prompted to enter the password for the new item and then asked again to confirm
+the password.
+
+This command is alternatively called 'add'.
+",
+                )
                 .alias("add")
                 .arg(Arg::with_name("item").value_name("NAME")),
         )
@@ -83,17 +154,45 @@ fn main() {
             SubCommand::with_name("remove")
                 .about("Remove an item from the password store")
                 .alias("rm")
-                .arg(Arg::with_name("item").value_name("NAME")),
+                .arg(Arg::with_name("item").value_name("NAME"))
+                .long_about(
+                    "
+Remove the given item from the password store, if it exists. If no argument is given, the user is
+prompted for the name of the item to remove.
+
+The user is prompted to confirm that they wish to remove the given item. To bypass confirmation,
+use the -f/--force flag.
+
+This command is alternatively called 'rm'.
+",
+                ),
         )
         .subcommand(
             SubCommand::with_name("lock")
-                .about("Lock the password store by encrypting the secret key with a passphrase"),
+                .about("Lock the password store")
+                .long_about(
+                    "
+Locks the password store by encrypting the secret key with a passphrase. While locked, any time
+a password is retrieved from the store (using 'passage show'), the passphrase must be entered.
+
+This can be used to provide an additional measure of security when using systems where other
+users have root access.
+",
+                ),
         )
         .subcommand(
             SubCommand::with_name("unlock")
-                .about("Unlock the password store by decrypting the secret key"),
+                .about("Unlock the password store")
+                .long_about(
+                    "
+Unlock the password store by decrypting the secret key.
+",
+                ),
         )
-        .subcommand(SubCommand::with_name("pubkey").about("Display password store public key"))
+        .subcommand(
+            SubCommand::with_name("pubkey")
+                .about("Display the public key corresponding to the password store's secret key"),
+        )
         .get_matches();
 
     let result = match matches.subcommand() {
