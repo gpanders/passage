@@ -2,7 +2,7 @@ use age::x25519::{Identity, Recipient};
 use std::fs::{self, DirEntry, File, OpenOptions};
 use std::io::prelude::*;
 use std::io::{self, BufReader};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::{crypt, error::Error, key};
 
@@ -32,6 +32,31 @@ impl PasswordStore {
         self.dir
             .join(PathBuf::from(name.to_string() + ".age"))
             .exists()
+    }
+
+    pub fn items(&self) -> io::Result<Vec<DirEntry>> {
+        fn scan(dir: &Path, entries: &mut Vec<DirEntry>) -> io::Result<()> {
+            for entry in fs::read_dir(&dir)?
+                .filter_map(|e| e.ok())
+                .collect::<Vec<DirEntry>>()
+                .into_iter()
+            {
+                let path = entry.path();
+                if path.is_dir() {
+                    scan(&path, entries)?;
+                } else if let Some(ext) = path.extension() {
+                    if ext == ".age" {
+                        entries.push(entry);
+                    }
+                }
+            }
+
+            Ok(())
+        }
+
+        let mut entries: Vec<DirEntry> = vec![];
+        scan(&self.dir, &mut entries)?;
+        Ok(entries)
     }
 
     pub fn insert(&self, name: &str, secret: &str) -> Result<(), Error> {
@@ -88,16 +113,7 @@ impl PasswordStore {
     }
 
     pub fn reencrypt(&self, key: &Identity) -> Result<(), Error> {
-        let items: Vec<DirEntry> = fs::read_dir(&self.dir)?
-            .filter_map(|e| e.ok())
-            .filter(|e| {
-                e.file_name()
-                    .to_str()
-                    .map_or(false, |s| s.ends_with(".age"))
-            })
-            .collect();
-
-        for item in items {
+        for item in self.items()? {
             let mut cypher = vec![];
             File::open(item.path())?.read_to_end(&mut cypher)?;
 

@@ -34,7 +34,7 @@ fn tree(root: &Path, depth: usize, prefix: &str) -> io::Result<()> {
 
         if path.is_dir() {
             println!("{}", file_name.blue().bold());
-            let next_prefix = prefix.to_string().clone() + if is_last { "    " } else { "│   " };
+            let next_prefix = prefix.to_string() + if is_last { "    " } else { "│   " };
             tree(&path, depth + 1, &next_prefix)?;
         } else {
             let file_name = match file_name.strip_suffix(".age") {
