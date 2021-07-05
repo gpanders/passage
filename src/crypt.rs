@@ -100,9 +100,7 @@ pub fn decrypt_with_key(cypher: &[u8], key: &Identity) -> Result<String, Error> 
     };
 
     let mut decrypted = vec![];
-    let mut reader = decryptor.decrypt(iter::once(
-        Box::new(key.to_owned()) as Box<dyn age::Identity>
-    ))?;
+    let mut reader = decryptor.decrypt(iter::once(key as &dyn age::Identity))?;
 
     reader.read_to_end(&mut decrypted)?;
 

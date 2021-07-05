@@ -5,15 +5,16 @@ license = "GPL-3.0"
 version = "0.1.0"
 authors = ["Gregory Anders <greg@gpanders.com>"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+readme = "README.md"
+keywords = ["age", "pass"]
+categories = ["command-line-utilities", "password-store"]
 
 [dependencies]
 dirs = "3"
 colored = "2"
-age = "0.5"
+age = "0.6"
 secrecy = "0.7"
 pinentry = "0.2"
-clap = "2"
+clap = "2.33"
 clipboard = "0.5"
 rpassword = "5.0"
