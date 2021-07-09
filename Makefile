@@ -1,6 +1,6 @@
-prefix := /usr/local
-bindir := $(prefix)/bin
-sharedir := $(prefix)/share
+prefix = /usr/local
+bindir = $(prefix)/bin
+sharedir = $(prefix)/share
 
 .PHONY: all
 all: target/release/passage target/doc/passage.1
@@ -18,10 +18,10 @@ test:
 
 .PHONY: install
 install: target/release/passage target/doc/passage.1
-	install -d $(bindir) $(sharedir)/man/man1
-	install -m 0755 target/release/passage $(bindir)/
-	install -m 0644 target/doc/passage.1 $(sharedir)/man/man1/
+	install -d $(DESTDIR)$(bindir) $(DESTDIR)$(sharedir)/man/man1
+	install -m 0755 target/release/passage $(DESTDIR)$(bindir)/
+	install -m 0644 target/doc/passage.1 $(DESTDIR)$(sharedir)/man/man1/
 
 .PHONY: uninstall
 uninstall:
-	rm -f $(bindir)/passage $(sharedir)/man/man1/passage.1
+	rm -f $(DESTDIR)$(bindir)/passage $(DESTDIR)$(sharedir)/man/man1/passage.1
