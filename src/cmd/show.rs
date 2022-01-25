@@ -7,11 +7,7 @@ pub fn show(store: PasswordStore, item: &str, copy_to_clipboard: bool) -> Result
     let secret = store.get(item)?;
 
     if copy_to_clipboard {
-        let first_line = match secret.split('\n').next() {
-            Some(line) => line,
-            None => "",
-        };
-
+        let first_line = secret.split('\n').next().unwrap_or("");
         let mut ctx: ClipboardContext = ClipboardProvider::new()?;
         ctx.set_contents(first_line.to_string())?;
         eprintln!("Copied password for {} to clipboard.", item);

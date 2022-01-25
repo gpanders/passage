@@ -118,7 +118,7 @@ pub fn decrypt_secret_key<P: AsRef<Path>>(path: P, passphrase: Option<&str>) -> 
     )?
     .into_identities()
     .pop()
-    .ok_or_else(|| Error::NoSecretKey)?;
+    .ok_or(Error::NoSecretKey)?;
 
     save_secret_key(&key, path, true)?;
 

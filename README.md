@@ -155,5 +155,5 @@ can add new recipients to your store using the `-r`/`--recipients` option to
 the `init` subcommand. The argument to this option should be an age public key
 string. You can display the public key for your password store using
 
-    $ passage pubkey
+    $ passage key
 
