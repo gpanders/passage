@@ -45,7 +45,7 @@ impl PasswordStore {
                 if path.is_dir() {
                     scan(&path, entries)?;
                 } else if let Some(ext) = path.extension() {
-                    if ext == ".age" {
+                    if ext == "age" {
                         entries.push(entry);
                     }
                 }
@@ -123,5 +123,10 @@ impl PasswordStore {
         }
 
         Ok(())
+    }
+
+    pub fn list(&self) -> Result<Vec<String>, Error> {
+        let list = self.items()?.iter().filter_map(|s| s.path().file_stem().unwrap().to_os_string().into_string().ok()).collect();
+        Ok(list)
     }
 }
