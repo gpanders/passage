@@ -1,5 +1,12 @@
 # passage
 
+## Project Status
+
+This project is no longer maintained. Users seeking a password manager using
+[`age`][age] are advised to use <https://github.com/FiloSottile/passage> instead.
+
+## Description
+
 `passage` is a password store utilizing the [`age`][age] encryption library.
 
 Note that `age` is still considered **beta** software. Until `age` comes out of
